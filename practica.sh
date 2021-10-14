@@ -124,8 +124,11 @@ function area_clientes_alta_clientes() {
     local cadena=$id:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$telefono:$carpetadoc:S
 
     echo -e $cadena >>Fclientes
+<<<<<<< HEAD
 
     return
+=======
+>>>>>>> c76b4f09d6d1e24c632635e46633bb204e8988f9
 }
 
 #function area_clientes_modificacion_clientes(){
@@ -138,6 +141,7 @@ function area_clientes_alta_clientes() {
 
 function area_clientes_consulta_cliente() {
 
+<<<<<<< HEAD
     if ! [ -f "Fclientes" ]; then
         echo "El fichero de clientes no existe"
     else
@@ -223,6 +227,26 @@ function area_clientes_consulta_cliente() {
                 ;;
             esac
         done
+=======
+    # Creamos las carpetas necesarias para el correcto funcionamiento del programa
+    if ! [ -f "Fclientes" ]; then
+        echo "El fichero de clientes no existe"
+    else
+        printf "%10s" "Id"          # Valor 1
+        printf "%10s" "Nombre"      # Valor 2
+        printf "%15s" "Apellidos"   # Valor 3
+        printf "%20s" "Dirección"   # Valor 4
+        printf "%10s" "Ciudad"      # Valor 5
+        printf "%14s" "Provincia"   # Valor 6
+        printf "%14s" "País"        # Valor 7
+        printf "%14s" "DNI"         # Valor 8
+        printf "%14s" "Teléfono"    # Valor 9
+        printf "%10s" "Carpeta Doc" # Valor 10
+        printf "%10s" "Activo"      # Valor 11
+        printf "\n"
+
+        awk -F ":" '{printf "%10s", $1} {printf "%10s", $2} {printf "%15s", $3} {printf "%20s", $4} {printf "%10s", $5} {printf "%10s", $6} {printf "%10s", $7} {printf "%14s", $8} {printf "%14s", $9} {printf "%10s", $10} {printf "%10s", $11} {printf "\n"}' Fclientes
+>>>>>>> c76b4f09d6d1e24c632635e46633bb204e8988f9
     fi
 
     return
