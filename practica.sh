@@ -599,8 +599,130 @@ function mostrar_organismos() {
     fi
 }
 
-function gestion_documentos_presentacion_documento() {
+function mostrar_documentos() {
+    if [ -f Fdocumento ]; then
 
+        printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 1
+        printf "\e[4m%-20s\e[0m" "Id documento" # Valor 2
+        printf "\e[4m%-70s\e[0m" "Descripción"  # Valor 3
+        printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
+        printf "\n"
+
+        awk -F ":" '{
+        printf "%-20s", $1
+        printf "%-20s", $2
+        printf "%-70s", $3
+        printf "%-11s", $4
+        printf "\n"
+        }' Fdocumento
+
+    else
+        echo "El fichero Fdocumento no existe."
+    fi
+}
+
+function gestion_documentos_presentacion_documento() {
+    # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
+    if [ -f Fdocumento ]; then
+        if [ -f Fclientes]; then
+
+            area_clientes_consulta_cliente
+
+            local id_cliente=0
+            echo -n "Introduzca el id del cliente que desea presentar un documento: "
+            read id_cliente
+
+            # Buscamos si el documento está presentado. Si lo está, enc=1.
+            # Si no, enc=0.
+            local enc_cliente=0
+            while IFS= read -r line; do
+                IFS=':' read -ra VALUES <<<"$line"
+                ## To pritn all values
+                for i in "${VALUES[0]}"; do
+                    if [ ${VALUES[10]} == $id_cliente ] && [ ${VALUES[10]} == "S" ]; then
+                        enc_cliente=1
+                    fi
+                done
+            done <FpresenDoc
+
+            mostrar_documentos
+
+            local id_documento=0
+            echo -n "Introduzca el id del documento que desea presentar a un organismo: "
+            read id_documento
+
+            # Buscamos si el documento está presentado. Si lo está, enc=1.
+            # Si no, enc=0.
+            local enc=0
+            while IFS= read -r line; do
+                IFS=':' read -ra VALUES <<<"$line"
+                ## To pritn all values
+                for i in "${VALUES[0]}"; do
+                    if [ $i == $id_local ] && [ ${VALUES[10]} == "S" ]; then
+                        enc=1
+                    fi
+                done
+            done <FpresenDoc
+
+            # Si hemos encontrado el documento con el id introducido, borramos la línea correspondiente
+            # a dicho documento en Fdocumento
+            if ! [ $enc -eq 1 ]; then
+
+                # Mostramos los organismos.
+                mostrar_organismos
+
+                local id_organismo=0
+                echo -n "Introduzca el id del organismo al que quiere presentar el documento: "
+                read id_organismo
+
+                local enc2=0
+                while IFS= read -r line; do
+                    IFS=':' read -ra VALUES <<<"$line"
+                    ## To pritn all values
+                    for i in "${VALUES[0]}"; do
+                        if [ $i == $id_organismo ]; then
+                            enc2=1
+                        fi
+                    done
+                done <Forganismos
+
+                if [ $enc2 -eq 1 ]; then
+
+                    local motivo_presentacion=0
+                    echo -n "Introduzca el motivo de la presentación: "
+                    read motivo_presentacion
+
+                    local comunidad_autonoma=0
+                    echo -n "Introduzca la comunidad autónoma donde se presenta: "
+                    read comunidad_autonoma
+
+                    local poblacion=0
+                    echo -n "Introduzca la población donde se realiza la presentación: "
+                    read poblacion
+
+                    local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
+
+                    cadena=$login:$id_cliente:$id_documento:$id_organismo:$motivo_presentacion:$comunidad_autonoma:$poblacion:$fecha
+                    echo -e $cadena >>FpresenDoc
+                    echo $cadena
+                    pulsa_para_continuar
+
+                else
+                    echo "No existe el organismo introducido."
+                fi
+            else
+                echo "El documento ya ha sido presentado."
+            fi
+        else
+            echo "El fichero de clientes no existe."
+        fi
+
+    else
+        echo "El fichero Fdocumento no existe."
+        pulsa_para_continuar
+    fi
+
+    return
 }
 
 # --------------------------------------------------------
