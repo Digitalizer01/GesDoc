@@ -446,7 +446,7 @@ function mostrar_organismos() {
     fi
 }
 
-# Funciónque muestra todos los documentos del fichero Fdocumento
+# Función que muestra todos los documentos del fichero Fdocumento
 function mostrar_documentos() {
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
 
@@ -603,7 +603,7 @@ function gestion_documentos_baja_documento() {
             done <AplicacionIsmael/Ficheros/FpresenDoc
 
         else
-            enc=1
+            enc=0
         fi
 
         # Si no hemos encontrado el documento con el id introducido o no existe el fichero AplicacionIsmael/Ficheros/FpresenDoc,
@@ -899,6 +899,61 @@ function gestion_documentos_consultas_cliente_dado() {
 
 }
 
+function gestion_documentos_consultas_organismos() {
+    if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
+        mostrar_documentos
+
+        local id_documento=0
+        echo -n "Introduzca el id del documento que desea consultar los organismos a los que se ha presentado: "
+        read id_documento
+
+        # Si el fichero AplicacionIsmael/Ficheros/FpresenDoc existe, comprobamos que exista el id del documento que queremos
+        # consultar. Si existe, consultamos su id de organismo.
+        if [ -f AplicacionIsmael/Ficheros/FpresenDoc ]; then
+            # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
+            # Buscamos si el documento está presentado.
+            # Si no, enc=0.
+
+            printf "\e[4m%-10s\e[0m" "Id"               # Valor 1
+            printf "\e[4m%-70s\e[0m" "Nombre organismo" # Valor 2
+            printf "\n"
+
+            local id_organismo=0
+            while IFS= read -r line; do
+                IFS=':' read -ra VALUES <<<"$line"
+                ## To pritn all values
+                for i in "${VALUES[2]}"; do
+                    if [ $i == $id_documento ]; then
+                        id_organismo=${VALUES[3]}
+
+                        # Si no hemos encontrado el documento con el id introducido o no existe el fichero AplicacionIsmael/Ficheros/FpresenDoc,
+                        # mostramos el organismo al que se ha presentado el documento.
+                        # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
+
+                        # id_organismo:nombre_organismo
+
+                        awk -v id_local_organismo=$id_organismo -F ":" '{
+                        if($1==id_local_organismo) {
+                                printf "%-10s", $1
+                                printf "%-70s", $2
+                                printf "\n"
+                            }
+                        }' AplicacionIsmael/Ficheros/Forganismos
+                    fi
+                done
+            done <AplicacionIsmael/Ficheros/FpresenDoc
+        fi
+
+    else
+
+        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+    fi
+
+    pulsa_para_continuar
+
+    return
+}
+
 # Función que muestra el menú asociado a la opción de la consulta de documentos.
 # Opción 1: documentos por cliente
 #   - Opción 1: muestra todos los documentos asociados a cada cliente del fichero Fclientes
@@ -956,7 +1011,7 @@ function gestion_documentos_consultas() {
 
         2)
             clear
-
+            gestion_documentos_consultas_organismos
             ;;
         3)
             correcto=0
