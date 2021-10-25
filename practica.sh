@@ -318,7 +318,7 @@ function area_clientes_baja_cliente() {
             echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                     # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
             sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >tmp && mv tmp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
         else
-            echo "Cliente no encontrado."
+            echo "(tput setaf 1)Cliente no encontrado."
         fi
 
     else
@@ -411,7 +411,7 @@ function area_clientes_consulta_cliente() {
                 correcto=0
                 ;;
             *)
-                echo "Opción seleccionada incorrecta"
+                echo "(tput setaf 1)Opción seleccionada incorrecta"
                 correcto=1
                 ;;
             esac
@@ -427,6 +427,7 @@ function area_clientes_consulta_cliente() {
 
 # ----------------- Gestión de documentos ----------------
 
+# Función que muestra todos los organismos del fichero Forganimos
 function mostrar_organismos() {
     if [ -f AplicacionIsmael/Ficheros/Forganismos ]; then
 
@@ -441,10 +442,11 @@ function mostrar_organismos() {
     }' AplicacionIsmael/Ficheros/Forganismos
 
     else
-        echo "El fichero AplicacionIsmael/Ficheros/Forganismos no existe."
+        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Forganismos no existe."
     fi
 }
 
+# Funciónque muestra todos los documentos del fichero Fdocumento
 function mostrar_documentos() {
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
 
@@ -463,10 +465,11 @@ function mostrar_documentos() {
         }' AplicacionIsmael/Ficheros/Fdocumento
 
     else
-        echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
 }
 
+# Función que muestra el menú referido al apartado de Gestión de documentos
 function gestion_documentos() {
     local correcto=1
     while [ $correcto -eq 1 ]; do
@@ -506,13 +509,14 @@ function gestion_documentos() {
             correcto=0
             ;;
         *)
-            echo "Opción seleccionada incorrecta"
+            echo "(tput setaf 1)Opción seleccionada incorrecta"
             correcto=1
             ;;
         esac
     done
 }
 
+# Función que da de alta un documento en el fichero Fdocumento
 function gestion_documentos_alta_documento() {
     # Comprobamos que el fichero AplicacionIsmael/Ficheros/Fclientes existe. Si no, no podemos
     # dar de alta un documento.
@@ -557,7 +561,7 @@ function gestion_documentos_alta_documento() {
 
             echo -e $cadena >>AplicacionIsmael/Ficheros/Fdocumento # Añadimos la línea al fichero AplicacionIsmael/Ficheros/Fdocumento
         else
-            echo "El cliente especificado no existe."
+            echo "(tput setaf 1)El cliente especificado no existe."
             pulsa_para_continuar
         fi
     else
@@ -568,6 +572,8 @@ function gestion_documentos_alta_documento() {
     return
 }
 
+# Función que da de baja un documento del fichero Fdocumento eliminando la línea referida
+# a dicho documento.
 function gestion_documentos_baja_documento() {
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
         mostrar_documentos
@@ -627,7 +633,7 @@ function gestion_documentos_baja_documento() {
         fi
 
     else
-        echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         pulsa_para_continuar
     fi
 
@@ -635,6 +641,7 @@ function gestion_documentos_baja_documento() {
 
 }
 
+# Función que presenta un documento de Fdocumento a un organismo que está en Forganismos
 function gestion_documentos_presentacion_documento() {
     # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
@@ -727,7 +734,7 @@ function gestion_documentos_presentacion_documento() {
                     pulsa_para_continuar
 
                 else
-                    echo "No existe el organismo introducido."
+                    echo "(tput setaf 1)No existe el organismo introducido."
                     pulsa_para_continuar
                 fi
             else
@@ -735,12 +742,12 @@ function gestion_documentos_presentacion_documento() {
                 pulsa_para_continuar
             fi
         else
-            echo "El fichero de clientes no existe."
+            echo "(tput setaf 1)El fichero de clientes no existe."
             pulsa_para_continuar
         fi
 
     else
-        echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         pulsa_para_continuar
     fi
 
@@ -749,6 +756,7 @@ function gestion_documentos_presentacion_documento() {
     return
 }
 
+# Función que muestra todos los documentos asociados a cada cliente del fichero Fclientes
 function gestion_documentos_consultas_cliente() {
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
 
@@ -828,6 +836,7 @@ function gestion_documentos_consultas_cliente() {
     return
 }
 
+# Función que muestra todos los documentos asociados a un cliente dado.
 function gestion_documentos_consultas_cliente_dado() {
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
 
@@ -890,6 +899,11 @@ function gestion_documentos_consultas_cliente_dado() {
 
 }
 
+# Función que muestra el menú asociado a la opción de la consulta de documentos.
+# Opción 1: documentos por cliente
+#   - Opción 1: muestra todos los documentos asociados a cada cliente del fichero Fclientes
+#   - Opción 2: muestra todos los documentos asociados a un cliente dado.
+# Opción 2: organismos con documentos
 function gestion_documentos_consultas() {
     local correcto=1
     while [ $correcto -eq 1 ]; do
@@ -932,7 +946,7 @@ function gestion_documentos_consultas() {
                     correcto_2=0
                     ;;
                 *)
-                    echo "Opción seleccionada incorrecta"
+                    echo "(tput setaf 1)Opción seleccionada incorrecta"
                     correcto_2=1
                     ;;
                 esac
@@ -948,7 +962,7 @@ function gestion_documentos_consultas() {
             correcto=0
             ;;
         *)
-            echo "Opción seleccionada incorrecta"
+            echo "(tput setaf 1)Opción seleccionada incorrecta"
             correcto=1
             ;;
         esac
@@ -968,5 +982,5 @@ if [ $? -eq 1 ]; then
 
 else
 
-    echo "Error. Usuario no encontrado."
+    echo "(tput setaf 1)Error. Usuario no encontrado."
 fi

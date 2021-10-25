@@ -90,9 +90,9 @@ function area_clientes_consulta_cliente() {
 	return
 }
 
-if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
+if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
 
-	if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
+	if [ -f AplicacionIsmael/Ficheros/Forganimos ]; then
 
 		area_clientes_consulta_cliente
 
@@ -138,11 +138,11 @@ if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
 		rm AplicacionIsmael/Ficheros/temp
 
 	else
-		echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+		echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Forganismos no existe."
 	fi
 
 else
-	echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+	echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
 fi
 
 return
