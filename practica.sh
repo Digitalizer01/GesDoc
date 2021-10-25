@@ -642,6 +642,8 @@ function gestion_documentos_baja_documento() {
 }
 
 # Función que presenta un documento de Fdocumento a un organismo que está en Forganismos
+# No puede presentarse un documento dos veces al mismo organismos, pero sí presentarse
+# a varios organismos.
 function gestion_documentos_presentacion_documento() {
     # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
@@ -712,6 +714,26 @@ function gestion_documentos_presentacion_documento() {
                     done
                 done <AplicacionIsmael/Ficheros/Forganismos
 
+                # Comprobamos que no hayamos presentado anteriormente el documento al mismo organismo
+                # Si se presentó antes a ese mismo organismo, enc3=1
+                # Si no, enc3=0
+                local enc3=0
+                while IFS= read -r line; do
+                    IFS=':' read -ra VALUES <<<"$line"
+                    ## To pritn all values
+                    for i in "${VALUES[3]}"; do
+                        if [ $i == $id_organismo ] && [ $id_cliente == ${VALUES[1]} ]; then
+                            enc3=1
+                        fi
+                    done
+                done <AplicacionIsmael/Ficheros/FpresenDoc
+
+                if [ $enc3 -eq 0 ]; then
+
+                else
+                    echo "El documento especificado ya se ha presentado a ese mismo organismo."
+                fi
+
                 if [ $enc2 -eq 1 ]; then
 
                     local motivo_presentacion=0
@@ -753,7 +775,7 @@ function gestion_documentos_presentacion_documento() {
 
     pulsa_para_continuar
 
-    return
+    returnlocal
 }
 
 # Función que muestra todos los documentos asociados a cada cliente del fichero Fclientes

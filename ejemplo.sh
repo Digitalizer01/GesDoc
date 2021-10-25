@@ -24,7 +24,7 @@ function mostrar_documentos() {
 if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
 	mostrar_documentos
 
-	local id_documento=0
+	id_documento=0
 	echo -n "Introduzca el id del documento que desea dar de baja: "
 	read id_documento
 
