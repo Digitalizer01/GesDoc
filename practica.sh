@@ -1055,6 +1055,9 @@ function gestion_documentos_consultas() {
 
 # ------------------ Gestión de informes -----------------
 
+# Función que muestra el menú de la gestión de informes.
+# Opción 1: muestra todos los documentos asociados a todos los clientes.
+# Opción 2: muestra todas las acciones de un usuario dado.
 function gestion_informes() {
 
     local correcto=1
@@ -1091,7 +1094,41 @@ function gestion_informes() {
     return
 }
 
+# Función que muestra todos los documentos asociados a todos los clientes.
 function gestion_informes_documentos_clientes() {
+
+    if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
+        if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
+
+            area_clientes_consulta_cliente_activos
+
+            local id_cliente=0
+            echo -n "Introduza el id del cliente que desea consultar: "
+            read id_cliente
+
+            # Vamos a imprimir todos los documentos asociados al cliente elegido.
+
+            awk -v id_cliente_local=$id_cliente -F ":" '{
+            if($1==id_cliente_local) {
+                    printf $1
+                    printf ":"
+                    printf $2
+                    printf ":"
+                    printf $3
+                    printf ":"
+                    printf $4
+                }
+            }' AplicacionIsmael/Ficheros/Fdocumento
+
+        else
+            echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        fi
+
+    else
+        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+    fi
+
+    pulsa_para_continuar
 
     return
 }
