@@ -81,10 +81,7 @@ function menu_principal() {
             ;;
         esac
 
-        echo "Abajo del todo en while menu_principal. El valor de correcto_menu_principal es: " $correcto_menu_principal
     done
-
-    echo "Fin menu_principal"
 
     return
 }
@@ -931,23 +928,7 @@ function gestion_documentos_consultas_cliente_dado() {
 }
 
 # Función que muestra los documentos asociados un organismo.
-# Si se pasa 0 como parámetro, se muestran los organismos a los que se ha presentado un documento indicado.
-# Si se pasa 1 como parámetro, se muestran los documentos de un cliente dado y los organismos asociados a dichos documentos.
 function gestion_documentos_consultas_organismos() {
-
-    # Comprobamos si hemos recibido un parámetro o no.
-    if [ $# == 1 ]; then
-        # Indicamos el cliente
-
-        area_clientes_consulta_cliente_activos
-
-        local id_cliente=0
-        echo -n "Introduza el id del cliente que desea consultar: "
-        read id_cliente
-    else
-
-    fi
-
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
         mostrar_documentos
 
@@ -993,7 +974,6 @@ function gestion_documentos_consultas_organismos() {
         fi
 
     else
-
         echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
 
@@ -1070,6 +1050,50 @@ function gestion_documentos_consultas() {
             ;;
         esac
     done
+}
+# --------------------------------------------------------
+
+# ------------------ Gestión de informes -----------------
+
+function gestion_informes() {
+
+    local correcto=1
+    while [ $correcto -eq 1 ]; do
+        clear
+
+        echo "████████ GESTIÓN DE INFORMES ████████"
+        echo "       1. Documentos de clientes"
+        echo "       2. Acciones de usuario dado"
+        echo "       3. Salir"
+        echo "█████████████████████████████████████"
+
+        local variable=0
+        read variable
+        case $variable in
+        1)
+            clear
+            gestion_documentos_alta_documento
+            ;;
+        2)
+            clear
+            gestion_documentos_baja_documento
+            ;;
+        3)
+            correcto=0
+            ;;
+        *)
+            echo "(tput setaf 1)Opción seleccionada incorrecta"
+            correcto=1
+            ;;
+        esac
+    done
+
+    return
+}
+
+function gestion_informes_documentos_clientes() {
+
+    return
 }
 
 # --------------------------------------------------------
