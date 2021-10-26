@@ -1,15 +1,18 @@
-if [ -f Forganismos ]; then
+local motivo_presentacion=0
+echo -n "Introduzca el motivo de la presentación: "
+read motivo_presentacion
 
-    printf "\e[4m%-10s\e[0m" "Id"               # Valor 1
-    printf "\e[4m%-70s\e[0m" "Nombre organismo" # Valor 2
-    printf "\n"
+local comunidad_autonoma=0
+echo -n "Introduzca la comunidad autónoma donde se presenta: "
+read comunidad_autonoma
 
-    awk -F ":" '{
-        printf "%-10s", $1
-        printf "%-70s", $2
-        printf "\n"
-    }' Forganismos
+local poblacion=0
+echo -n "Introduzca la población donde se realiza la presentación: "
+read poblacion
 
-else
-    echo "El fichero Forganismos no existe."
-fi
+local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
+
+cadena=$login:$id_cliente:$id_documento:$id_organismo:$motivo_presentacion:$comunidad_autonoma:$poblacion:$fecha
+echo -e $cadena >>AplicacionIsmael/Ficheros/FpresenDoc
+echo $cadena
+pulsa_para_continuar

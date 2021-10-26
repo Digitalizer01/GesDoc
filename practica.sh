@@ -329,9 +329,81 @@ function area_clientes_baja_cliente() {
     return
 }
 
+function area_clientes_consulta_cliente_activos() {
+    # Activos
+
+    printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
+    printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
+    printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
+    printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
+    printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
+    printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
+    printf "\e[4m%-25s\e[0m" "País"        # Valor 7
+    printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
+    printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
+    printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
+    printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
+    printf "\n"
+
+    awk -F ":" '{
+        if($11=="S") {
+            printf "%-10s", $1
+            printf "%-15s", $2
+            printf "%-17s", $3
+            printf "%-30s", $4
+            printf "%-16s", $5
+            printf "%-25s", $6
+            printf "%-24s", $7
+            printf "%-14s", $8
+            printf "%-14s", $9
+            printf "%-17s", $10
+            printf "%-10s", $11
+            printf "\n"
+        }
+    }' AplicacionIsmael/Ficheros/Fclientes
+
+    return
+}
+
+function area_clientes_consulta_cliente_no_activos() {
+    # No activos
+    printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
+    printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
+    printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
+    printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
+    printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
+    printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
+    printf "\e[4m%-25s\e[0m" "País"        # Valor 7
+    printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
+    printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
+    printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
+    printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
+    printf "\n"
+
+    awk -F ":" '{
+        if($11=="N") {
+            printf "%-10s", $1
+            printf "%-15s", $2
+            printf "%-17s", $3
+            printf "%-30s", $4
+            printf "%-16s", $5
+            printf "%-25s", $6
+            printf "%-24s", $7
+            printf "%-14s", $8
+            printf "%-14s", $9
+            printf "%-17s", $10
+            printf "%-10s", $11
+            printf "\n"
+        }
+    }' AplicacionIsmael/Ficheros/Fclientes
+
+    return
+}
+
 # Función que muestra todos los clientes. Puede seleccionarse si desean verse los activos o
 # los no activos.
 function area_clientes_consulta_cliente() {
+
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
         local activos=1 # Si activos=1, la consulta se hará de los clientes con activo=S. Si activo=0, la consulta se hará de los clientes con activo=N.
 
@@ -344,70 +416,12 @@ function area_clientes_consulta_cliente() {
             clear
 
             case $activos in
-            S) # Activos
-
-                printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
-                printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
-                printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
-                printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
-                printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
-                printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
-                printf "\e[4m%-25s\e[0m" "País"        # Valor 7
-                printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
-                printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
-                printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
-                printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
-                printf "\n"
-
-                awk -F ":" '{
-                    if($11=="S") {
-                        printf "%-10s", $1
-                        printf "%-15s", $2
-                        printf "%-17s", $3
-                        printf "%-30s", $4
-                        printf "%-16s", $5
-                        printf "%-25s", $6
-                        printf "%-24s", $7
-                        printf "%-14s", $8
-                        printf "%-14s", $9
-                        printf "%-17s", $10
-                        printf "%-10s", $11
-                        printf "\n"
-                    }
-                }' AplicacionIsmael/Ficheros/Fclientes
-
+            S)
+                area_clientes_consulta_cliente_activos
                 correcto=0
                 ;;
-            N)                                         # No activos
-                printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
-                printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
-                printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
-                printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
-                printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
-                printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
-                printf "\e[4m%-25s\e[0m" "País"        # Valor 7
-                printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
-                printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
-                printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
-                printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
-                printf "\n"
-
-                awk -F ":" '{
-                    if($11=="N") {
-                        printf "%-10s", $1
-                        printf "%-15s", $2
-                        printf "%-17s", $3
-                        printf "%-30s", $4
-                        printf "%-16s", $5
-                        printf "%-25s", $6
-                        printf "%-24s", $7
-                        printf "%-14s", $8
-                        printf "%-14s", $9
-                        printf "%-17s", $10
-                        printf "%-10s", $11
-                        printf "\n"
-                    }
-                }' AplicacionIsmael/Ficheros/Fclientes
+            N)
+                area_clientes_consulta_cliente_no_activos
                 correcto=0
                 ;;
             *)
@@ -527,7 +541,7 @@ function gestion_documentos_alta_documento() {
             echo -n "" >>AplicacionIsmael/Ficheros/Fdocumento
         fi
 
-        area_clientes_consulta_cliente # Mostramos los clientes.
+        area_clientes_consulta_cliente_activos # Mostramos los clientes.
 
         local id_cliente=0
         echo -n "Introduzca el id del cliente al que desea vincular el documento: "
@@ -649,7 +663,7 @@ function gestion_documentos_presentacion_documento() {
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
         if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
 
-            area_clientes_consulta_cliente
+            area_clientes_consulta_cliente_activos
 
             local id_cliente=0
             echo -n "Introduzca el id del cliente que desea presentar un documento: "
@@ -728,14 +742,8 @@ function gestion_documentos_presentacion_documento() {
                     done
                 done <AplicacionIsmael/Ficheros/FpresenDoc
 
-                if [ $enc3 -eq 0 ]; then
-
-                else
-                    echo "El documento especificado ya se ha presentado a ese mismo organismo."
-                fi
-
-                if [ $enc2 -eq 1 ]; then
-
+                if ! [ $enc3 -eq 1 ]; then
+                    # Si no se ha presentado al mismo organismo anteriormente
                     local motivo_presentacion=0
                     echo -n "Introduzca el motivo de la presentación: "
                     read motivo_presentacion
@@ -756,10 +764,11 @@ function gestion_documentos_presentacion_documento() {
                     pulsa_para_continuar
 
                 else
-                    echo "(tput setaf 1)No existe el organismo introducido."
-                    pulsa_para_continuar
+                    echo "El documento especificado ya se ha presentado a ese mismo organismo."
                 fi
+
             else
+
                 echo "El documento ya ha sido presentado."
                 pulsa_para_continuar
             fi
@@ -775,7 +784,7 @@ function gestion_documentos_presentacion_documento() {
 
     pulsa_para_continuar
 
-    returnlocal
+    return
 }
 
 # Función que muestra todos los documentos asociados a cada cliente del fichero Fclientes
@@ -864,7 +873,7 @@ function gestion_documentos_consultas_cliente_dado() {
 
         if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
 
-            area_clientes_consulta_cliente
+            area_clientes_consulta_cliente_activos
 
             local id_cliente=0
             echo -n "Introduza el id del cliente que desea consultar: "
@@ -921,7 +930,24 @@ function gestion_documentos_consultas_cliente_dado() {
 
 }
 
+# Función que muestra los documentos asociados un organismo.
+# Si se pasa 0 como parámetro, se muestran los organismos a los que se ha presentado un documento indicado.
+# Si se pasa 1 como parámetro, se muestran los documentos de un cliente dado y los organismos asociados a dichos documentos.
 function gestion_documentos_consultas_organismos() {
+
+    # Comprobamos si hemos recibido un parámetro o no.
+    if [ $# == 1 ]; then
+        # Indicamos el cliente
+
+        area_clientes_consulta_cliente_activos
+
+        local id_cliente=0
+        echo -n "Introduza el id del cliente que desea consultar: "
+        read id_cliente
+    else
+
+    fi
+
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
         mostrar_documentos
 
@@ -1058,6 +1084,5 @@ if [ $? -eq 1 ]; then
     menu_principal
 
 else
-
     echo "(tput setaf 1)Error. Usuario no encontrado."
 fi
