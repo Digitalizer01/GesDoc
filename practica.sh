@@ -46,31 +46,33 @@ function iniciar_sesion() {
 # Parámetro 1: acción del usuario.
 #
 # 1: Area cliente
-#   1.1: Alta clientes
-#   1.2: Modificación clientes
-#   1.3: Baja clientes
-#   1.4: Consulta clientes
-#       1.4.1: Consulta clientes activos
-#       1.4.2: Consulta clientes no activos
-#   1.5: Salir del menú de clientes
-# 2: Gestión de documentos
-#   2.1: Alta documentos
-#   2.2: Baja documentos
-#   2.3: Presentación documentos
-#   2.4: Consultas
-#       2.4.1: Consulta de documentos de clientes
-#       2.4.2: Consulta de organismos de documento
-#   2.5: Salir menú de documentos
-# 3: Gestión de informes
-#   3.1: Documentos de clientes
-#   3.2: Acciones de usuario dado
-#   3.3: Salir menú de informes
+#   1.1: Alta clientes										(cliente: 1) (documento: ---)
+#   1.2: Modificación clientes								(cliente: 1) (documento: ---)
+#   1.3: Baja clientes										(cliente: 1) (documento: ---)
+#   1.4: Consulta clientes                                  (cliente: ---) (documento: ---)
+#       1.4.1: Consulta clientes activos 					(cliente: varios) (documento: ---)
+#       1.4.2: Consulta clientes no activos 				(cliente: varios) (documento: ---)
+#   1.5: Salir del menú de clientes 						(cliente: ---) (documento: ---)
+# 2: Gestión de documentos                                  (cliente: ---) (documento: ---)
+#   2.1: Alta documentos 									(cliente: 1) (documento: 1)
+#   2.2: Baja documentos 									(cliente: 1) (documento: 1)
+#   2.3: Presentación documentos 							(cliente: 1) (documento: 1)
+#   2.4: Consultas                                          (cliente: ---) (documento: ---)
+#       2.4.1: Consulta de documentos de clientes 			(cliente: 1) (documento: varios)
+#       2.4.2: Consulta de organismos de documento 			(cliente: 1) (documento: 1)
+#   2.5: Salir menú de documentos 							(cliente: ---) (documento: ---)
+# 3: Gestión de informes                                    (cliente: ---) (documento: ---)
+#   3.1: Documentos de clientes 							(cliente: 1) (documento: varios)
+#   3.2: Acciones de usuario dado 							(cliente: ---) (documento: ---)
+#   3.3: Salir menú de informes 							(cliente: ---) (documento: ---)
 #
 # Parámetro 2: si la operación es sobre un cliente en particular, se registrará el id de cliente.
-#              Si es de varios clientes, se anotará "varios".
+#              Si es de varios clientes, se anotará "varios".Si la operación no es sobre
+#              clientes, se anotará "---"
 #
 # Parámetro 3: si la operación es sobre un documento de un cliente en particular se registrará el id
-#              de documento. Si es de varios clientes, se anotará varios.
+#              de documento. Si es de varios clientes, se anotará "varios". Si la operación no es sobre
+#              documentos, se anotará "---"
 function fichero_operaciones() {
     # id_usuario:fecha:hora:operación:id_cliente:id_documento
 
@@ -131,6 +133,8 @@ function menu_principal() {
 
 # Función que permite la selección de las diferentes posibles opciones del área de clientes.
 function area_clientes() {
+    fichero_operaciones 1 --- ---
+
     local correcto=1
     while [ $correcto -eq 1 ]; do
         clear
@@ -164,6 +168,7 @@ function area_clientes() {
             pulsa_para_continuar
             ;;
         5)
+            fichero_operaciones 1.5 --- ---
             correcto=0
             ;;
         *)
@@ -229,6 +234,8 @@ function area_clientes_alta_clientes() {
 
     echo -e $cadena >>AplicacionIsmael/Ficheros/Fclientes
 
+    fichero_operaciones 1.1 $id ---
+
     return
 }
 
@@ -289,9 +296,17 @@ function area_clientes_modificacion_clientes() {
             linea="$linea""N"                                                                                                                                           # Añadimos N al final de linea.
             echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                                                                           # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
             sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp && mv AplicacionIsmael/Ficheros/temp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
+
+            fichero_operaciones 1.2 $id_local ---
+        else
+            echo "$(tput setaf 1)El cliente indicado no existe."
+
+            fichero_operaciones 1.2 --- ---
         fi
     else
         echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        fichero_operaciones 1.2 --- ---
+
         pulsa_para_continuar
     fi
 
@@ -355,12 +370,18 @@ function area_clientes_baja_cliente() {
             linea="$linea""N"                                                                                     # Añadimos N al final de linea.
             echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                     # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
             sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >tmp && mv tmp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
+
+            fichero_operaciones 1.3 $id_local ---
+
         else
             echo "(tput setaf 1)Cliente no encontrado."
+            fichero_operaciones 1.3 --- ---
         fi
 
     else
         echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        fichero_operaciones 1.3 --- ---
+
         pulsa_para_continuar
     fi
 
@@ -368,72 +389,87 @@ function area_clientes_baja_cliente() {
 }
 
 function area_clientes_consulta_cliente_activos() {
-    # Activos
+    if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
+        # Activos
 
-    printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
-    printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
-    printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
-    printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
-    printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
-    printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
-    printf "\e[4m%-25s\e[0m" "País"        # Valor 7
-    printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
-    printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
-    printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
-    printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
-    printf "\n"
+        printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
+        printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
+        printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
+        printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
+        printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
+        printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
+        printf "\e[4m%-25s\e[0m" "País"        # Valor 7
+        printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
+        printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
+        printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
+        printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
+        printf "\n"
 
-    awk -F ":" '{
-        if($11=="S") {
-            printf "%-10s", $1
-            printf "%-15s", $2
-            printf "%-17s", $3
-            printf "%-30s", $4
-            printf "%-16s", $5
-            printf "%-25s", $6
-            printf "%-24s", $7
-            printf "%-14s", $8
-            printf "%-14s", $9
-            printf "%-17s", $10
-            printf "%-10s", $11
-            printf "\n"
-        }
-    }' AplicacionIsmael/Ficheros/Fclientes
+        awk -F ":" '{
+            if($11=="S") {
+                printf "%-10s", $1
+                printf "%-15s", $2
+                printf "%-17s", $3
+                printf "%-30s", $4
+                printf "%-16s", $5
+                printf "%-25s", $6
+                printf "%-24s", $7
+                printf "%-14s", $8
+                printf "%-14s", $9
+                printf "%-17s", $10
+                printf "%-10s", $11
+                printf "\n"
+            }
+        }' AplicacionIsmael/Ficheros/Fclientes
+
+        fichero_operaciones 1.4.1 varios ---
+    else
+        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        fichero_operaciones 1.4.1 --- ---
+    fi
 
     return
 }
 
 function area_clientes_consulta_cliente_no_activos() {
-    # No activos
-    printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
-    printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
-    printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
-    printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
-    printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
-    printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
-    printf "\e[4m%-25s\e[0m" "País"        # Valor 7
-    printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
-    printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
-    printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
-    printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
-    printf "\n"
 
-    awk -F ":" '{
-        if($11=="N") {
-            printf "%-10s", $1
-            printf "%-15s", $2
-            printf "%-17s", $3
-            printf "%-30s", $4
-            printf "%-16s", $5
-            printf "%-25s", $6
-            printf "%-24s", $7
-            printf "%-14s", $8
-            printf "%-14s", $9
-            printf "%-17s", $10
-            printf "%-10s", $11
-            printf "\n"
-        }
-    }' AplicacionIsmael/Ficheros/Fclientes
+    if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
+        # No activos
+        printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
+        printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
+        printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
+        printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
+        printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
+        printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
+        printf "\e[4m%-25s\e[0m" "País"        # Valor 7
+        printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
+        printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
+        printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
+        printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
+        printf "\n"
+
+        awk -F ":" '{
+            if($11=="N") {
+                printf "%-10s", $1
+                printf "%-15s", $2
+                printf "%-17s", $3
+                printf "%-30s", $4
+                printf "%-16s", $5
+                printf "%-25s", $6
+                printf "%-24s", $7
+                printf "%-14s", $8
+                printf "%-14s", $9
+                printf "%-17s", $10
+                printf "%-10s", $11
+                printf "\n"
+            }
+        }' AplicacionIsmael/Ficheros/Fclientes
+
+        fichero_operaciones 1.4.2 varios ---
+    else
+        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        fichero_operaciones 1.4.2 --- ---
+    fi
 
     return
 }
@@ -523,6 +559,8 @@ function mostrar_documentos() {
 
 # Función que muestra el menú referido al apartado de Gestión de documentos
 function gestion_documentos() {
+    fichero_operaciones 2 --- ---
+
     local correcto=1
     while [ $correcto -eq 1 ]; do
         clear
@@ -612,6 +650,8 @@ function gestion_documentos_alta_documento() {
             local cadena=$id_cliente:$id_documento:$descripcion:$fecha
 
             echo -e $cadena >>AplicacionIsmael/Ficheros/Fdocumento # Añadimos la línea al fichero AplicacionIsmael/Ficheros/Fdocumento
+
+            fichero_operaciones 2.1 $id_cliente $id_documento
         else
             echo "(tput setaf 1)El cliente especificado no existe."
             pulsa_para_continuar
