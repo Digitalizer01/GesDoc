@@ -17,7 +17,7 @@ function fichero_operaciones() {
 #   1.1: Alta clientes										(cliente: 1) (documento: ---)
 #   1.2: Modificación clientes								(cliente: 1) (documento: ---)
 #   1.3: Baja clientes										(cliente: 1) (documento: ---)
-#   1.4: Consulta clientes
+#   1.4: Consulta clientes									()
 #       1.4.1: Consulta clientes activos 					(cliente: varios) (documento: ---)
 #       1.4.2: Consulta clientes no activos 				(cliente: varios) (documento: ---)
 #   1.5: Salir del menú de clientes 						(cliente: ---) (documento: ---)
