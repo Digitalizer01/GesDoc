@@ -1,15 +1,13 @@
-# Función que muestra todos los documentos del fichero Fdocumento
-function mostrar_documentos() {
-	echo "$#"
+function fichero_operaciones() {
+	# id_usuario:fecha:hora:operación:id_cliente:id_documento
+
+	if [ $# == 3 ]; then
+		local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
+		local hora=$(date +%H)          # Tomamos la hora
+		echo $login:$fecha:$hora:$1:$2:$3 >>AplicacionIsmael/Ficheros/Foperaciones
+	fi
+
+	return
 }
 
-mostrar_documentos
-array=($(cut -f 1 -d ":" AplicacionIsmael/Ficheros/Fclientes))
-
-echo "Elementos del array: " ${array[*]}
-
-for ((i = 0; i < ${#array[*]}; i++)); do
-	echo "Posición $i: " ${array[i]}
-done
-
-echo "Cantidad de elementos del array: " ${#array[*]}
+fichero_operaciones 1 2 3

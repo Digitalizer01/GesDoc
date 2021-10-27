@@ -42,6 +42,47 @@ function iniciar_sesion() {
     return $iniciado
 }
 
+# Función que permite registrar las acciones de un usuario por el sistema. La función recibe 3 parámetros:
+# Parámetro 1: acción del usuario.
+#
+# 1: Area cliente
+#   1.1: Alta clientes
+#   1.2: Modificación clientes
+#   1.3: Baja clientes
+#   1.4: Consulta clientes
+#       1.4.1: Consulta clientes activos
+#       1.4.2: Consulta clientes no activos
+#   1.5: Salir del menú de clientes
+# 2: Gestión de documentos
+#   2.1: Alta documentos
+#   2.2: Baja documentos
+#   2.3: Presentación documentos
+#   2.4: Consultas
+#       2.4.1: Consulta de documentos de clientes
+#       2.4.2: Consulta de organismos de documento
+#   2.5: Salir menú de documentos
+# 3: Gestión de informes
+#   3.1: Documentos de clientes
+#   3.2: Acciones de usuario dado
+#   3.3: Salir menú de informes
+#
+# Parámetro 2: si la operación es sobre un cliente en particular, se registrará el id de cliente.
+#              Si es de varios clientes, se anotará "varios".
+#
+# Parámetro 3: si la operación es sobre un documento de un cliente en particular se registrará el id
+#              de documento. Si es de varios clientes, se anotará varios.
+function fichero_operaciones() {
+    # id_usuario:fecha:hora:operación:id_cliente:id_documento
+
+    if [ $# == 3 ]; then
+        local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
+        local hora=$(date +%H)          # Tomamos la hora
+        echo $login:$fecha:$hora:$1:$2:$3 >>AplicacionIsmael/Ficheros/Foperaciones
+    fi
+
+    return
+}
+
 function menu_principal() {
     local correcto_menu_principal=1
     local variable_menu_principal=0
@@ -66,7 +107,7 @@ function menu_principal() {
             gestion_documentos
             ;;
         3)
-            echo "Ha seleccionado gestión de informes"
+            gestion_informes
             ;;
         4)
             echo "Ha seleccionado ayuda"
@@ -236,18 +277,18 @@ function area_clientes_modificacion_clientes() {
                     printf $9
                     printf ":"
                     printf $10
-                    tempprintf ":"
+                    printf ":"
                     printf $11
                 }
-            }' AplicacionIsmael/Ficheros/Fclientes >temp
+            }' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp
 
-            read -r linea <temp                                                                                   # Leemos el fichero temp que contiene la línea a borrar.
-            sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes                                               # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
-            rm temp                                                                                               # Borramos el fichero temp.
-            linea=${linea%?}                                                                                      # Quitamos la letra S del final de la variable linea.
-            linea="$linea""N"                                                                                     # Añadimos N al final de linea.
-            echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                     # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
-            sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >tmp && mv tmp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
+            read -r linea <AplicacionIsmael/Ficheros/temp                                                                                                               # Leemos el fichero temp que contiene la línea a borrar.
+            sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes                                                                                                     # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
+            rm AplicacionIsmael/Ficheros/temp                                                                                                                           # Borramos el fichero temp.
+            linea=${linea%?}                                                                                                                                            # Quitamos la letra S del final de la variable linea.
+            linea="$linea""N"                                                                                                                                           # Añadimos N al final de linea.
+            echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                                                                           # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
+            sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp && mv AplicacionIsmael/Ficheros/temp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
         fi
     else
         echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
@@ -305,11 +346,11 @@ function area_clientes_baja_cliente() {
                     printf ":"
                     printf $11
                 }
-            }' AplicacionIsmael/Ficheros/Fclientes >temp
+            }' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp
 
-            read -r linea <temp                                                                                   # Leemos el fichero temp que contiene la línea a borrar.
+            read -r linea <AplicacionIsmael/Ficheros/temp                                                         # Leemos el fichero temp que contiene la línea a borrar.
             sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes                                               # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
-            rm temp                                                                                               # Borramos el fichero temp.
+            rm AplicacionIsmael/Ficheros/temp                                                                     # Borramos el fichero temp.
             linea=${linea%?}                                                                                      # Quitamos la letra S del final de la variable linea.
             linea="$linea""N"                                                                                     # Añadimos N al final de linea.
             echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                     # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
@@ -632,12 +673,12 @@ function gestion_documentos_baja_documento() {
                     printf ":"
                     printf $4
                 }
-            }' AplicacionIsmael/Ficheros/Fdocumento >temp
+            }' AplicacionIsmael/Ficheros/Fdocumento >AplicacionIsmael/Ficheros/temp
 
-            read -r linea <temp # Leemos el fichero temp que contiene la línea a borrar.
+            read -r linea <AplicacionIsmael/Ficheros/temp # Leemos el fichero temp que contiene la línea a borrar.
             echo "Línea encontrada: " $linea
             sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fdocumento # Borramos la línea del documento seleccionado del fichero AplicacionIsmael/Ficheros/Fdocumento.
-            rm temp                                                  # Borramos el ficher temp.
+            rm AplicacionIsmael/Ficheros/temp                        # Borramos el ficher temp.
         else
             echo "Documento no encontrado."
             pulsa_para_continuar
@@ -784,86 +825,6 @@ function gestion_documentos_presentacion_documento() {
     return
 }
 
-# Función que muestra todos los documentos asociados a cada cliente del fichero Fclientes
-function gestion_documentos_consultas_cliente() {
-    if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
-
-        if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
-
-            while IFS= read -r line; do
-                IFS=':' read -ra VALUES <<<"$line"
-                ## To pritn all values
-                for i in "${VALUES[0]}"; do
-                    if [ ${VALUES[10]} == "S" ]; then
-                        printf "\e[4m%-10s\e[0m" "Id"        # Valor 1
-                        printf "\e[4m%-15s\e[0m" "Nombre"    # Valor 2
-                        printf "\e[4m%-17s\e[0m" "Apellidos" # Valor 3
-                        printf "\n"
-
-                        printf "%-10s" ${VALUES[0]}
-                        printf "%-15s" ${VALUES[1]}
-                        printf "%-17s" ${VALUES[2]}
-                        printf "\n"
-
-                        local id_cliente=${VALUES[0]}
-
-                        # Vamos a imprimir todos los documentos asociados al cliente elegido.
-
-                        awk -v id_cliente_local=$id_cliente -F ":" '{
-                        if($1==id_cliente_local) {
-                                printf $1
-                                printf ":"
-                                printf $2
-                                printf ":"
-                                printf $3
-                                printf ":"
-                                printf $4
-                            }
-                        }' AplicacionIsmael/Ficheros/Fdocumento >AplicacionIsmael/Ficheros/temp
-
-                        # Comprobamos si el fichero temp está vacío o no.
-                        # Si está vacío, mostraremos el mensaje correspondiente.
-                        # Si no lo está, mostraremos los datos de los documentos.
-                        if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
-                            echo "No dispone de documentos asociados."
-                        else
-                            printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 1
-                            printf "\e[4m%-20s\e[0m" "Id documento" # Valor 2
-                            printf "\e[4m%-70s\e[0m" "Descripción"  # Valor 3
-                            printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
-                            printf "\n"
-
-                            awk -F ":" '{
-                                printf "%-20s", $1
-                                printf "%-20s", $2
-                                printf "%-70s", $3
-                                printf "%-11s", $4
-                                printf "\n"
-						    }' AplicacionIsmael/Ficheros/temp
-                        fi
-
-                    fi
-
-                    printf "\n"
-
-                done
-            done <AplicacionIsmael/Ficheros/Fclientes
-
-            rm AplicacionIsmael/Ficheros/temp
-
-        else
-            echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
-        fi
-
-    else
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
-    fi
-
-    pulsa_para_continuar
-
-    return
-}
-
 # Función que muestra todos los documentos asociados a un cliente dado.
 function gestion_documentos_consultas_cliente_dado() {
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
@@ -1003,38 +964,7 @@ function gestion_documentos_consultas() {
         case $variable in
         1)
             clear
-
-            local correcto_2=1
-            while [ $correcto_2 -eq 1 ]; do
-                clear
-
-                echo "███████ DOCUMENTOS POR CLIENTE ██████"
-                echo "       1. Sin elegir cliente"
-                echo "       2. Eligiendo cliente"
-                echo "       3. Salir"
-                echo "█████████████████████████████████████"
-
-                local variable_2=0
-                read variable_2
-                case $variable_2 in
-                1)
-                    clear
-                    gestion_documentos_consultas_cliente
-                    ;;
-                2)
-                    clear
-                    gestion_documentos_consultas_cliente_dado
-                    ;;
-                3)
-                    correcto_2=0
-                    ;;
-                *)
-                    echo "(tput setaf 1)Opción seleccionada incorrecta"
-                    correcto_2=1
-                    ;;
-                esac
-            done
-
+            gestion_documentos_consultas_cliente_dado
             ;;
 
         2)
@@ -1075,11 +1005,11 @@ function gestion_informes() {
         case $variable in
         1)
             clear
-            gestion_documentos_alta_documento
+            gestion_informes_documentos_clientes
             ;;
         2)
             clear
-            gestion_documentos_baja_documento
+
             ;;
         3)
             correcto=0
@@ -1100,27 +1030,88 @@ function gestion_informes_documentos_clientes() {
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
         if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
 
-            area_clientes_consulta_cliente_activos
-
             local id_cliente=0
-            echo -n "Introduza el id del cliente que desea consultar: "
-            read id_cliente
 
-            # Vamos a imprimir todos los documentos asociados al cliente elegido.
+            # Imprimimos la información del cliente
 
-            awk -v id_cliente_local=$id_cliente -F ":" '{
-            if($1==id_cliente_local) {
-                    printf $1
-                    printf ":"
-                    printf $2
-                    printf ":"
-                    printf $3
-                    printf ":"
-                    printf $4
-                }
-            }' AplicacionIsmael/Ficheros/Fdocumento
+            array=($(cut -f 1 -d ":" AplicacionIsmael/Ficheros/Fclientes))
+
+            for ((i = 0; i < ${#array[*]}; i++)); do
+                # Vamos a imprimir la información del cliente con id i
+
+                printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
+                printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
+                printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
+                printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
+                printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
+                printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
+                printf "\e[4m%-25s\e[0m" "País"        # Valor 7
+                printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
+                printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
+                printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
+                printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
+                printf "\n"
+
+                id_cliente=${array[i]}
+
+                awk -v id_cliente_local=$id_cliente -F ":" '{
+                if($1==id_cliente_local) {
+                        printf "%-10s", $1
+                        printf "%-15s", $2
+                        printf "%-17s", $3
+                        printf "%-30s", $4
+                        printf "%-16s", $5
+                        printf "%-25s", $6
+                        printf "%-24s", $7
+                        printf "%-14s", $8
+                        printf "%-14s", $9
+                        printf "%-17s", $10
+                        printf "%-10s", $11
+                        printf "\n"
+                    }
+                }' AplicacionIsmael/Ficheros/Fclientes
+
+                # Vamos a imprimir todos los documentos asociados al cliente elegido.
+
+                printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 1
+                printf "\e[4m%-20s\e[0m" "Id documento" # Valor 2
+                printf "\e[4m%-70s\e[0m" "Descripción"  # Valor 3
+                printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
+                printf "\n"
+
+                awk -v id_cliente_local=$id_cliente -F ":" '{
+                    if($1==id_cliente_local) {
+                        printf "%-20s", $1
+                        printf "%-20s", $2
+                        printf "%-70s", $3
+                        printf "%-11s", $4
+                        printf "\n"
+                    }
+                }' AplicacionIsmael/Ficheros/Fdocumento >AplicacionIsmael/Ficheros/temp
+
+                # Comprobamos si el fichero temp está vacío o no.
+                # Si está vacío, mostraremos el mensaje correspondiente.
+                # Si no lo está, mostraremos los datos de los documentos.
+                if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
+                    echo "No dispone de documentos asociados."
+                else
+                    awk -F ":" '{
+                        printf "%-20s", $1
+                        printf "%-20s", $2
+                        printf "%-70s", $3
+                        printf "%-11s", $4
+                        printf "\n"
+                    }' AplicacionIsmael/Ficheros/temp
+                fi
+
+                rm AplicacionIsmael/Ficheros/temp
+
+                printf "\n"
+
+            done
 
         else
+
             echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         fi
 
