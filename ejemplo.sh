@@ -3,8 +3,8 @@ function fichero_operaciones() {
 
 	if [ $# == 3 ]; then
 		local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
-		local hora=$(date +%H)          # Tomamos la hora
-		echo $login:$fecha:$hora:$1:$2:$3 >>AplicacionIsmael/Ficheros/Foperaciones
+		local hora=$(date +%H_%M)       # Tomamos la hora
+		echo $login:$fecha:$hora:$1:$2:$3
 	fi
 
 	return
@@ -17,20 +17,20 @@ function fichero_operaciones() {
 #   1.1: Alta clientes										(cliente: 1) (documento: ---)
 #   1.2: Modificación clientes								(cliente: 1) (documento: ---)
 #   1.3: Baja clientes										(cliente: 1) (documento: ---)
-#   1.4: Consulta clientes									()
+#   1.4: Consulta clientes                                  (cliente: ---) (documento: ---)
 #       1.4.1: Consulta clientes activos 					(cliente: varios) (documento: ---)
 #       1.4.2: Consulta clientes no activos 				(cliente: varios) (documento: ---)
 #   1.5: Salir del menú de clientes 						(cliente: ---) (documento: ---)
-# 2: Gestión de documentos
+# 2: Gestión de documentos                                  (cliente: ---) (documento: ---)
 #   2.1: Alta documentos 									(cliente: 1) (documento: 1)
 #   2.2: Baja documentos 									(cliente: 1) (documento: 1)
 #   2.3: Presentación documentos 							(cliente: 1) (documento: 1)
-#   2.4: Consultas
+#   2.4: Consultas                                          (cliente: ---) (documento: ---)
 #       2.4.1: Consulta de documentos de clientes 			(cliente: 1) (documento: varios)
 #       2.4.2: Consulta de organismos de documento 			(cliente: 1) (documento: 1)
 #   2.5: Salir menú de documentos 							(cliente: ---) (documento: ---)
-# 3: Gestión de informes
-#   3.1: Documentos de clientes 							(cliente: 1) (documento: varios)
+# 3: Gestión de informes                                    (cliente: ---) (documento: ---)
+#   3.1: Documentos de clientes 							(cliente: varios) (documento: varios)
 #   3.2: Acciones de usuario dado 							(cliente: ---) (documento: ---)
 #   3.3: Salir menú de informes 							(cliente: ---) (documento: ---)
 #
