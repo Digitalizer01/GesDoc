@@ -1,47 +1,105 @@
-function fichero_operaciones() {
-	# id_usuario:fecha:hora:operación:id_cliente:id_documento
+# Función que permite mostrar la traza de los usuario por la aplicación.
+function gestion_informes_acciones_usuarios() {
+	if [ -f AplicacionIsmael/Ficheros/Foperaciones ]; then
+		# id_usuario:fecha:hora:operación:id_cliente:id_documento
 
-	if [ $# == 3 ]; then
-		local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
-		local hora=$(date +%H_%M)       # Tomamos la hora
-		echo $login:$fecha:$hora:$1:$2:$3
+		printf "\e[4m%-20s\e[0m" "Usuario"      # Valor 1
+		printf "\e[4m%-20s\e[0m" "Fecha"        # Valor 2
+		printf "\e[4m%-20s\e[0m" "Hora"         # Valor 3
+		printf "\e[4m%-40s\e[0m" "Operación"    # Valor 4
+		printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 5
+		printf "\e[4m%-20s\e[0m" "Id documento" # Valor 6
+		printf "\n"
+
+		local enc=0
+		while IFS= read -r line; do
+			IFS=':' read -ra VALUES <<<"$line"
+			## To pritn all values
+			for i in "${VALUES[0]}"; do
+				printf "%-20s" "${VALUES[0]}"
+				printf "%-20s" "${VALUES[1]}"
+				printf "%-20s" "${VALUES[2]}"
+
+				case ${VALUES[3]} in
+				"1")
+					printf "%-40s" "Area cliente"
+					;;
+				"1.1")
+					printf "%-40s" "Alta clientes"
+					;;
+				"1.2")
+					printf "%-40s" "Modificacion clientes"
+					;;
+				"1.3")
+					printf "%-40s" "Baja cliente"
+					;;
+				"1.4")
+					printf "%-40s" "Consulta clientes"
+					;;
+				"1.4.1")
+					printf "%-40s" "Consulta clientes activos"
+					;;
+				"1.4.2")
+					printf "%-40s" "Consulta clientes no activos"
+					;;
+				"1.5")
+					printf "%-40s" "Salir del menu de clientes"
+					;;
+				"2")
+					printf "%-40s" "Gestion de documentos"
+					;;
+				"2.1")
+					printf "%-40s" "Alta documentos"
+					;;
+				"2.2")
+					printf "%-40s" "Baja documentos"
+					;;
+				"2.3")
+					printf "%-40s" "Presentacion documentos"
+					;;
+				"2.4")
+					printf "%-40s" "Consultas documentos"
+					;;
+				"2.4.1")
+					printf "%-40s" "Consulta de documentos de clientes"
+					;;
+				"2.4.2")
+					printf "%-40s" "Consulta de organismos de documento"
+					;;
+				"2.5")
+					printf "%-40s" "Salir menu de documentos"
+					;;
+				"3")
+					printf "%-40s" "Gestion de informes"
+					;;
+				"3.1")
+					printf "%-40s" "Documentos de clientes"
+					;;
+				"3.2")
+					printf "%-40s" "Acciones de usuario dado"
+					;;
+				"3.3")
+					printf "%-40s" "Salir menu de informes"
+					;;
+				"4")
+					printf "%-40s" "Ayuda"
+					;;
+				"5")
+					printf "%-40s" "Salir de la apliacion"
+					;;
+				esac
+
+				printf "%-20s" "${VALUES[4]}"
+				printf "%-20s" "${VALUES[5]}"
+				printf "\n"
+			done
+		done <AplicacionIsmael/Ficheros/Foperaciones
+
+	else
+		echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Foperaciones no existe."
 	fi
 
 	return
 }
 
-# Función que permite registrar las acciones de un usuario por el sistema. La función recibe 3 parámetros:
-# Parámetro 1: acción del usuario.
-#
-# 1: Area cliente
-#   1.1: Alta clientes										(cliente: 1) (documento: ---)
-#   1.2: Modificación clientes								(cliente: 1) (documento: ---)
-#   1.3: Baja clientes										(cliente: 1) (documento: ---)
-#   1.4: Consulta clientes                                  (cliente: ---) (documento: ---)
-#       1.4.1: Consulta clientes activos 					(cliente: varios) (documento: ---)
-#       1.4.2: Consulta clientes no activos 				(cliente: varios) (documento: ---)
-#   1.5: Salir del menú de clientes 						(cliente: ---) (documento: ---)
-# 2: Gestión de documentos                                  (cliente: ---) (documento: ---)
-#   2.1: Alta documentos 									(cliente: 1) (documento: 1)
-#   2.2: Baja documentos 									(cliente: 1) (documento: 1)
-#   2.3: Presentación documentos 							(cliente: 1) (documento: 1)
-#   2.4: Consultas                                          (cliente: ---) (documento: ---)
-#       2.4.1: Consulta de documentos de clientes 			(cliente: 1) (documento: varios)
-#       2.4.2: Consulta de organismos de documento 			(cliente: 1) (documento: 1)
-#   2.5: Salir menú de documentos 							(cliente: ---) (documento: ---)
-# 3: Gestión de informes                                    (cliente: ---) (documento: ---)
-#   3.1: Documentos de clientes 							(cliente: varios) (documento: varios)
-#   3.2: Acciones de usuario dado 							(cliente: ---) (documento: ---)
-#   3.3: Salir menú de informes 							(cliente: ---) (documento: ---)
-#
-# Parámetro 2: si la operación es sobre un cliente en particular, se registrará el id de cliente.
-#              Si es de varios clientes, se anotará "varios".Si la operación no es sobre
-#              clientes, se anotará "---"
-#
-# Parámetro 3: si la operación es sobre un documento de un cliente en particular se registrará el id
-#              de documento. Si es de varios clientes, se anotará "varios". Si la operación no es sobre
-#              documentos, se anotará "---"
-
-id=9
-
-fichero_operaciones 1.1 $id ---
+gestion_informes_acciones_usuarios
