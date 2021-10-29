@@ -1,105 +1,41 @@
-# Función que permite mostrar la traza de los usuario por la aplicación.
-function gestion_informes_acciones_usuarios() {
-	if [ -f AplicacionIsmael/Ficheros/Foperaciones ]; then
-		# id_usuario:fecha:hora:operación:id_cliente:id_documento
+echo -n "Introduzca el id del cliente que desea modificar: "
+read id_local
 
-		printf "\e[4m%-20s\e[0m" "Usuario"      # Valor 1
-		printf "\e[4m%-20s\e[0m" "Fecha"        # Valor 2
-		printf "\e[4m%-20s\e[0m" "Hora"         # Valor 3
-		printf "\e[4m%-40s\e[0m" "Operación"    # Valor 4
-		printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 5
-		printf "\e[4m%-20s\e[0m" "Id documento" # Valor 6
-		printf "\n"
+nombre=0
+apellidos=0
+direccion=0
+ciudad=0
+provincia=0
+pais=0
+dni=0
+telefono=0
+carpetadoc=0
+activo=0
 
-		local enc=0
-		while IFS= read -r line; do
-			IFS=':' read -ra VALUES <<<"$line"
-			## To pritn all values
-			for i in "${VALUES[0]}"; do
-				printf "%-20s" "${VALUES[0]}"
-				printf "%-20s" "${VALUES[1]}"
-				printf "%-20s" "${VALUES[2]}"
+linea_cliente_original=0
 
-				case ${VALUES[3]} in
-				"1")
-					printf "%-40s" "Area cliente"
-					;;
-				"1.1")
-					printf "%-40s" "Alta clientes"
-					;;
-				"1.2")
-					printf "%-40s" "Modificacion clientes"
-					;;
-				"1.3")
-					printf "%-40s" "Baja cliente"
-					;;
-				"1.4")
-					printf "%-40s" "Consulta clientes"
-					;;
-				"1.4.1")
-					printf "%-40s" "Consulta clientes activos"
-					;;
-				"1.4.2")
-					printf "%-40s" "Consulta clientes no activos"
-					;;
-				"1.5")
-					printf "%-40s" "Salir del menu de clientes"
-					;;
-				"2")
-					printf "%-40s" "Gestion de documentos"
-					;;
-				"2.1")
-					printf "%-40s" "Alta documentos"
-					;;
-				"2.2")
-					printf "%-40s" "Baja documentos"
-					;;
-				"2.3")
-					printf "%-40s" "Presentacion documentos"
-					;;
-				"2.4")
-					printf "%-40s" "Consultas documentos"
-					;;
-				"2.4.1")
-					printf "%-40s" "Consulta de documentos de clientes"
-					;;
-				"2.4.2")
-					printf "%-40s" "Consulta de organismos de documento"
-					;;
-				"2.5")
-					printf "%-40s" "Salir menu de documentos"
-					;;
-				"3")
-					printf "%-40s" "Gestion de informes"
-					;;
-				"3.1")
-					printf "%-40s" "Documentos de clientes"
-					;;
-				"3.2")
-					printf "%-40s" "Acciones de usuario dado"
-					;;
-				"3.3")
-					printf "%-40s" "Salir menu de informes"
-					;;
-				"4")
-					printf "%-40s" "Ayuda"
-					;;
-				"5")
-					printf "%-40s" "Salir de la apliacion"
-					;;
-				esac
+enc=0
+while IFS= read -r line; do
+	IFS=':' read -ra VALUES <<<"$line"
+	## To pritn all values
+	for i in "${VALUES[0]}"; do
+		if [ $i == $id_local ] && [ ${VALUES[10]} == "S" ]; then
+			enc=1
+			# id_local es id_cliente
+			nombre=${VALUES[1]}
+			apellidos=${VALUES[2]}
+			direccion=${VALUES[3]}
+			ciudad=${VALUES[4]}
+			provincia=${VALUES[5]}
+			pais=${VALUES[6]}
+			dni=${VALUES[7]}
+			telefono=${VALUES[8]}
+			carpetadoc=${VALUES[9]}
+			activo=${VALUES[10]}
 
-				printf "%-20s" "${VALUES[4]}"
-				printf "%-20s" "${VALUES[5]}"
-				printf "\n"
-			done
-		done <AplicacionIsmael/Ficheros/Foperaciones
+			linea_cliente_original=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
+		fi
+	done
+done <AplicacionIsmael/Ficheros/Fclientes
 
-	else
-		echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Foperaciones no existe."
-	fi
-
-	return
-}
-
-gestion_informes_acciones_usuarios
+sed -i "\|$linea_cliente_original|d" AplicacionIsmael/Ficheros/Fclientes

@@ -190,7 +190,7 @@ function area_clientes() {
 # de dicho cliente será IDCLIENTE_Doc
 function area_clientes_alta_clientes() {
     if ! [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
-        echo "$(tput setaf 1)No existe el fichero AplicacionIsmael/Ficheros/Fclientes. Va a crearse uno."
+        echo "No existe el fichero AplicacionIsmael/Ficheros/Fclientes. Va a crearse uno."
         echo -n "" >>AplicacionIsmael/Ficheros/Fclientes
     fi
 
@@ -203,6 +203,7 @@ function area_clientes_alta_clientes() {
     local ciudad
     local provincia
     local pais
+    local dni
     local direccion
     local telefono
     local carpetadoc
@@ -230,13 +231,16 @@ function area_clientes_alta_clientes() {
     echo -n "Introduzca pais: "
     read pais
 
+    echo -n "Introduzca DNI: "
+    read dni
+
     echo -n "Introduzca telefono: "
     read telefono
 
     carpetadoc="$id""_Doc"
     mkdir "AplicacionIsmael/AreaCli/$carpetadoc"
 
-    local cadena=$id:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$telefono:$carpetadoc:S
+    local cadena=$id:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:S
 
     echo -e $cadena >>AplicacionIsmael/Ficheros/Fclientes
 
@@ -248,11 +252,26 @@ function area_clientes_alta_clientes() {
 # Función que permite modificar un campo específico de un cliente dado.
 function area_clientes_modificacion_clientes() {
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
-        area_clientes_consulta_cliente
+        area_clientes_consulta_cliente_activos
+        # id_cliente:nombre:apellidos:dirección:ciudad:provincia:país:dni:teléfono:carpetadoc:activo
 
         local id_local
         echo -n "Introduzca el id del cliente que desea modificar: "
         read id_local
+
+        local nombre=0
+        local apellidos=0
+        local direccion=0
+        local ciudad=0
+        local provincia=0
+        local pais=0
+        local dni=0
+        local telefono=0
+        local carpetadoc=0
+        local activo=0
+
+        local linea_cliente_original=0
+        local linea_cliente_nueva=0
 
         local enc=0
         while IFS= read -r line; do
@@ -261,12 +280,90 @@ function area_clientes_modificacion_clientes() {
             for i in "${VALUES[0]}"; do
                 if [ $i == $id_local ] && [ ${VALUES[10]} == "S" ]; then
                     enc=1
+                    # id_local es id_cliente
+                    nombre=${VALUES[1]}
+                    apellidos=${VALUES[2]}
+                    direccion=${VALUES[3]}
+                    ciudad=${VALUES[4]}
+                    provincia=${VALUES[5]}
+                    pais=${VALUES[6]}
+                    dni=${VALUES[7]}
+                    telefono=${VALUES[8]}
+                    carpetadoc=${VALUES[9]}
+                    activo=${VALUES[10]}
+
+                    linea_cliente_original=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
                 fi
             done
         done <AplicacionIsmael/Ficheros/Fclientes
 
         # Si hemos encontrado el cliente con el id introducido y está activo, entramos (es decir, enc=1)
         if [ $enc -eq 1 ]; then
+
+            clear
+
+            echo "████████ MODIFICAR CLIENTES █████████"
+            echo "       1. Nombre"
+            echo "       2. Apellidos"
+            echo "       3. Dirección"
+            echo "       4. Ciudad"
+            echo "       5. Provincia"
+            echo "       6. País"
+            echo "       7. DNI"
+            echo "       8. Teléfono"
+            echo "█████████████████████████████████████"
+
+            local variable=0
+            read variable
+            case $variable in
+            1)
+                clear
+                echo -n "Introduzca el nuevo nombre: "
+                read nombre
+                ;;
+            2)
+                clear
+                echo -n "Introduzca los nuevos apellidos: "
+                read apellidos
+                ;;
+            3)
+                clear
+                echo -n "Introduzca la nueva dirección: "
+                read direccion
+                ;;
+            4)
+                clear
+                echo -n "Introduzca la nueva ciudad: "
+                read ciudad
+                ;;
+            5)
+                clear
+                echo -n "Introduzca la nueva provincia: "
+                read provincia
+                ;;
+            6)
+                clear
+                echo -n "Introduzca el nuevo país: "
+                read pais
+                ;;
+            7)
+                clear
+                echo -n "Introduzca el nuevo DNI: "
+                read dni
+                ;;
+            8)
+                clear
+                echo -n "Introduzca el nuevo teléfono: "
+                read telefono
+                ;;
+            *)
+                echo "Opción seleccionada incorrecta"
+                correcto=1
+                ;;
+            esac
+
+            linea_cliente_original=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
+
             # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
             local linea=0
             awk -v id_local_baja=$id_local -F ":" '{
@@ -298,19 +395,18 @@ function area_clientes_modificacion_clientes() {
             read -r linea <AplicacionIsmael/Ficheros/temp                                                                                                               # Leemos el fichero temp que contiene la línea a borrar.
             sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes                                                                                                     # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
             rm AplicacionIsmael/Ficheros/temp                                                                                                                           # Borramos el fichero temp.
-            linea=${linea%?}                                                                                                                                            # Quitamos la letra S del final de la variable linea.
-            linea="$linea""N"                                                                                                                                           # Añadimos N al final de linea.
+            linea=$linea_cliente_nueva                                                                                                                                  # Añadimos N al final de linea.
             echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                                                                           # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
             sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp && mv AplicacionIsmael/Ficheros/temp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
 
             fichero_operaciones 1.2 $id_local ---
         else
-            echo "$(tput setaf 1)El cliente indicado no existe."
+            echo "El cliente indicado no existe."
 
             fichero_operaciones 1.2 --- ---
         fi
     else
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
         fichero_operaciones 1.2 --- ---
 
         pulsa_para_continuar
@@ -322,7 +418,7 @@ function area_clientes_modificacion_clientes() {
 # Función que permite dar de baja un cliente, es decir, poner el campo activo a N.
 function area_clientes_baja_cliente() {
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
-        area_clientes_consulta_cliente
+        area_clientes_consulta_cliente_activos
 
         local id_local
         echo -n "Introduzca el id del cliente que desea dar de baja: "
@@ -380,12 +476,12 @@ function area_clientes_baja_cliente() {
             fichero_operaciones 1.3 $id_local ---
 
         else
-            echo "(tput setaf 1)Cliente no encontrado."
+            echo "Cliente no encontrado."
             fichero_operaciones 1.3 --- ---
         fi
 
     else
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
         fichero_operaciones 1.3 --- ---
 
         pulsa_para_continuar
@@ -430,7 +526,7 @@ function area_clientes_consulta_cliente_activos() {
 
         fichero_operaciones 1.4.1 varios ---
     else
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
         fichero_operaciones 1.4.1 --- ---
     fi
 
@@ -473,7 +569,7 @@ function area_clientes_consulta_cliente_no_activos() {
 
         fichero_operaciones 1.4.2 varios ---
     else
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
         fichero_operaciones 1.4.2 --- ---
     fi
 
@@ -505,13 +601,13 @@ function area_clientes_consulta_cliente() {
                 correcto=0
                 ;;
             *)
-                echo "(tput setaf 1)Opción seleccionada incorrecta"
+                echo "Opción seleccionada incorrecta"
                 correcto=1
                 ;;
             esac
         done
     else
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
     fi
 
     return
@@ -536,7 +632,7 @@ function mostrar_organismos() {
     }' AplicacionIsmael/Ficheros/Forganismos
 
     else
-        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Forganismos no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Forganismos no existe."
     fi
 }
 
@@ -559,7 +655,7 @@ function mostrar_documentos() {
         }' AplicacionIsmael/Ficheros/Fdocumento
 
     else
-        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
 }
 
@@ -597,29 +693,37 @@ function gestion_documentos() {
         4)
             clear
             gestion_documentos_consultas
-            local temp
-            echo
-            read -n1 -r -p "Pulse cualquier tecla para continuar." temp
             ;;
         5)
             correcto=0
             ;;
         *)
-            echo "(tput setaf 1)Opción seleccionada incorrecta"
+            echo "Opción seleccionada incorrecta"
             correcto=1
             ;;
         esac
     done
 }
 
-# Función que da de alta un documento en el fichero Fdocumento
+# Función para crear un documento en el directorio de un cliente dado.
+# El documento tendrá como nombre su id.
+# Parámetro 1: id_cliente (para encontrar la dirección del directorio del cliente)
+# Parámetro 2: id_documento (para el nombre del documento)
+function crear_documento() {
+    direccion="AplicacionIsmael/AreaCli/$id_cliente""_Doc/$id_documento"
+    touch $direccion
+}
+
+# Función que da de alta un documento en el fichero Fdocumento.
+# Se crea un fichero en blanco con el nombre de su id de documento en el directorio del cliente
+# indicado.
 function gestion_documentos_alta_documento() {
     # Comprobamos que el fichero AplicacionIsmael/Ficheros/Fclientes existe. Si no, no podemos
     # dar de alta un documento.
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
         # Comprobamos que el fichero AplicacionIsmael/Ficheros/Fdocumento exista. Si no, lo creamos.
         if ! [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
-            echo "$(tput setaf 1)No existe el fichero AplicacionIsmael/Ficheros/Fdocumento. Va a crearse uno."
+            echo "No existe el fichero AplicacionIsmael/Ficheros/Fdocumento. Va a crearse uno."
             echo -n "" >>AplicacionIsmael/Ficheros/Fdocumento
         fi
 
@@ -657,15 +761,16 @@ function gestion_documentos_alta_documento() {
 
             echo -e $cadena >>AplicacionIsmael/Ficheros/Fdocumento # Añadimos la línea al fichero AplicacionIsmael/Ficheros/Fdocumento
 
+            crear_documento $id_cliente $id_documento
             fichero_operaciones 2.1 $id_cliente $id_documento
         else
             fichero_operaciones 2.1 --- ---
-            echo "(tput setaf 1)El cliente especificado no existe."
+            echo "El cliente especificado no existe."
             pulsa_para_continuar
         fi
     else
         fichero_operaciones 2.1 --- ---
-        echo "$(tput setaf 1)No existe el fichero AplicacionIsmael/Ficheros/Fclientes, no puede dar de alta documentos."
+        echo "No existe el fichero AplicacionIsmael/Ficheros/Fclientes, no puede dar de alta documentos."
         pulsa_para_continuar
     fi
 
@@ -737,7 +842,7 @@ function gestion_documentos_baja_documento() {
 
     else
         fichero_operaciones 2.2 --- ---
-        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         pulsa_para_continuar
     fi
 
@@ -855,21 +960,21 @@ function gestion_documentos_presentacion_documento() {
 
                 else
                     fichero_operaciones 2.3 --- ---
-                    echo "(tput setaf 1)El documento especificado ya se ha presentado a ese mismo organismo."
+                    echo "El documento especificado ya se ha presentado a ese mismo organismo."
                 fi
 
             else
                 fichero_operaciones 2.3 --- ---
-                echo "(tput setaf 1)El documento ya ha sido presentado."
+                echo "El documento ya ha sido presentado."
             fi
         else
             fichero_operaciones 2.3 --- ---
-            echo "(tput setaf 1)El fichero de clientes no existe."
+            echo "El fichero de clientes no existe."
         fi
 
     else
         fichero_operaciones 2.3 --- ---
-        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
 
     pulsa_para_continuar
@@ -930,12 +1035,12 @@ function gestion_documentos_consultas_cliente_dado() {
 
         else
             fichero_operaciones 2.4.1 --- ---
-            echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+            echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         fi
 
     else
         fichero_operaciones 2.4.1 --- ---
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
     fi
 
     pulsa_para_continuar
@@ -989,7 +1094,7 @@ function gestion_documentos_consultas_organismos() {
 
                         # Comprobamos si el documento está presentado a organismos o no.
                         if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
-                            echo "(tput setaf 1)El documento indicado no está presentado a ningún organismo."
+                            echo "El documento indicado no está presentado a ningún organismo."
                         else
                             awk -F ":" '{
                                 printf "%-10s", $1
@@ -1006,7 +1111,7 @@ function gestion_documentos_consultas_organismos() {
 
     else
         fichero_operaciones 2.4.2 --- ---
-        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
 
     pulsa_para_continuar
@@ -1049,7 +1154,7 @@ function gestion_documentos_consultas() {
             correcto=0
             ;;
         *)
-            echo "(tput setaf 1)Opción seleccionada incorrecta"
+            echo "Opción seleccionada incorrecta"
             correcto=1
             ;;
         esac
@@ -1092,7 +1197,7 @@ function gestion_informes() {
             correcto=0
             ;;
         *)
-            echo "(tput setaf 1)Opción seleccionada incorrecta"
+            echo "Opción seleccionada incorrecta"
             correcto=1
             ;;
         esac
@@ -1188,12 +1293,12 @@ function gestion_informes_documentos_clientes() {
 
         else
             fichero_operaciones 3.1 --- ---
-            echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
+            echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         fi
 
     else
         fichero_operaciones 3.1 --- ---
-        echo "$(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
     fi
 
     pulsa_para_continuar
@@ -1299,7 +1404,7 @@ function gestion_informes_acciones_usuarios() {
         done <AplicacionIsmael/Ficheros/Foperaciones
 
     else
-        echo "(tput setaf 1)El fichero AplicacionIsmael/Ficheros/Foperaciones no existe."
+        echo "El fichero AplicacionIsmael/Ficheros/Foperaciones no existe."
     fi
 
     return
@@ -1317,5 +1422,5 @@ if [ $? -eq 1 ]; then
     menu_principal
 
 else
-    echo "(tput setaf 1)Error. Usuario no encontrado."
+    echo "Error. Usuario no encontrado."
 fi
