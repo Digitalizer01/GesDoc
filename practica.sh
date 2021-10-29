@@ -116,8 +116,41 @@ function menu_principal() {
             gestion_informes
             ;;
         4)
+            clear
+
+            echo "La opción 1 (Área de clientes) se encargará de todas las operaciones relacionadas con las
+altas/bajas/modificaciones de los datos de los clientes. La opción 2 se encarga de la gestión de documentos de
+los clientes. La opción 3 (Gestión de informes) permitirá la emisión de informes de la información que esta
+aplicación gestiona. La opción 4 (Ayuda) mostrará ayuda de cada proceso que incluye. La opción 5 (Salir)
+finaliza la aplicación."
+
+            echo ""
+            echo "Menú:"
+            echo " 1: Area cliente
+   1.1: Alta clientes
+   1.2: Modificación clientes
+   1.3: Baja clientes
+   1.4: Consulta clientes
+       1.4.1: Consulta clientes activos
+       1.4.2: Consulta clientes no activos
+   1.5: Salir del menú de clientes
+ 2: Gestión de documentos
+   2.1: Alta documentos
+   2.2: Baja documentos
+   2.3: Presentación documentos
+   2.4: Consultas documentos
+       2.4.1: Consulta de documentos de clientes
+       2.4.2: Consulta de organismos de documento
+   2.5: Salir menú de documentos
+ 3: Gestión de informes
+   3.1: Documentos de clientes
+   3.2: Acciones de usuario dado
+   3.3: Salir menú de informes
+ 4: Ayuda
+ 5: Salir de la aplicación"
             fichero_operaciones 4 --- ---
-            echo "Ha seleccionado ayuda"
+
+            pulsa_para_continuar
             ;;
         5)
             fichero_operaciones 5 --- ---
@@ -362,8 +395,10 @@ function area_clientes_modificacion_clientes() {
                 ;;
             esac
 
-            linea_cliente_original=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
-
+            linea_cliente_nueva=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
+            linea_cliente_nueva=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
+            echo "Linea nueva: " $linea_cliente_nueva
+            echo "Línea original: " $linea_cliente_original
             # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
             local linea=0
             awk -v id_local_baja=$id_local -F ":" '{
@@ -585,18 +620,20 @@ function area_clientes_consulta_cliente() {
 
         local correcto=1
         while [ $correcto -eq 1 ]; do
-            echo "¿Desea consultar los clientes activos o los no activos?"
-            echo "Para seleccionar los activos, pulse S."
-            echo "Para seleccionar los no activos, pulse N."
+            echo "████████ CONSULTAR CLIENTES █████████"
+            echo "       1. Clientes activos"
+            echo "       2. Clientes no activos"
+            echo "█████████████████████████████████████"
+
             read activos
             clear
 
             case $activos in
-            S)
+            1)
                 area_clientes_consulta_cliente_activos
                 correcto=0
                 ;;
-            N)
+            2)
                 area_clientes_consulta_cliente_no_activos
                 correcto=0
                 ;;
@@ -836,7 +873,7 @@ function gestion_documentos_baja_documento() {
             fichero_operaciones 2.1 $id_cliente $id_documento
         else
             fichero_operaciones 2.2 --- ---
-            echo "Documento no encontrado."
+            echo "El documento indicado no existe o ha sido presentado ya."
             pulsa_para_continuar
         fi
 
@@ -955,7 +992,6 @@ function gestion_documentos_presentacion_documento() {
 
                     cadena=$login:$id_cliente:$id_documento:$id_organismo:$motivo_presentacion:$comunidad_autonoma:$poblacion:$fecha
                     echo -e $cadena >>AplicacionIsmael/Ficheros/FpresenDoc
-                    echo $cadena
                     fichero_operaciones 2.3 $id_cliente $id_documento
 
                 else
