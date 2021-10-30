@@ -170,6 +170,8 @@ finaliza la aplicación."
 
 # ------------------- Area de clientes -------------------
 
+# id_cliente:nombre:apellidos:dirección:ciudad:provincia:país:dni:teléfono:carpetadoc:activo
+
 # Función que permite la selección de las diferentes posibles opciones del área de clientes.
 function area_clientes() {
     fichero_operaciones 1 --- ---
@@ -271,11 +273,9 @@ function area_clientes_alta_clientes() {
     read telefono
 
     carpetadoc="$id""_Doc"
-    mkdir "AplicacionIsmael/AreaCli/$carpetadoc"
-
-    local cadena=$id:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:S
-
-    echo -e $cadena >>AplicacionIsmael/Ficheros/Fclientes
+    mkdir "AplicacionIsmael/AreaCli/$carpetadoc"                                                         # Creamos la carpeta del cliente.
+    local cadena=$id:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:S # Cadena referida al cliente
+    echo -e $cadena >>AplicacionIsmael/Ficheros/Fclientes                                                # Guardamos la cadena anterior en el fichero Fclientes
 
     fichero_operaciones 1.1 $id ---
 
@@ -286,7 +286,6 @@ function area_clientes_alta_clientes() {
 function area_clientes_modificacion_clientes() {
     if [ -f AplicacionIsmael/Ficheros/Fclientes ]; then
         area_clientes_consulta_cliente_activos
-        # id_cliente:nombre:apellidos:dirección:ciudad:provincia:país:dni:teléfono:carpetadoc:activo
 
         local id_local
         echo -n "Introduzca el id del cliente que desea modificar: "
@@ -325,6 +324,7 @@ function area_clientes_modificacion_clientes() {
                     carpetadoc=${VALUES[9]}
                     activo=${VALUES[10]}
 
+                    # Guardamos en linea_cliente_original todos los datos del cliente antes de modificarse.
                     linea_cliente_original=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
                 fi
             done
@@ -395,10 +395,8 @@ function area_clientes_modificacion_clientes() {
                 ;;
             esac
 
+            # Guardamos en linea_cliente_nueva todos los datos del cliente después de modificarse.
             linea_cliente_nueva=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
-            linea_cliente_nueva=$id_local:$nombre:$apellidos:$direccion:$ciudad:$provincia:$pais:$dni:$telefono:$carpetadoc:$activo
-            echo "Linea nueva: " $linea_cliente_nueva
-            echo "Línea original: " $linea_cliente_original
             # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
             local linea=0
             awk -v id_local_baja=$id_local -F ":" '{
@@ -427,23 +425,27 @@ function area_clientes_modificacion_clientes() {
                 }
             }' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp
 
-            read -r linea <AplicacionIsmael/Ficheros/temp                                                                                                               # Leemos el fichero temp que contiene la línea a borrar.
-            sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes                                                                                                     # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
-            rm AplicacionIsmael/Ficheros/temp                                                                                                                           # Borramos el fichero temp.
-            linea=$linea_cliente_nueva                                                                                                                                  # Añadimos N al final de linea.
-            echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                                                                           # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
-            sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp && mv AplicacionIsmael/Ficheros/temp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
+            # Leemos el fichero temp que contiene la línea a borrar.
+            read -r linea <AplicacionIsmael/Ficheros/temp
+            # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
+            sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes
+            # Borramos el fichero temp.
+            rm AplicacionIsmael/Ficheros/temp
+            # Guardamos en linea el cliente después de la modificación.
+            linea=$linea_cliente_nueva
+            # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
+            echo $linea >>AplicacionIsmael/Ficheros/Fclientes
+            # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
+            sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp && mv AplicacionIsmael/Ficheros/temp AplicacionIsmael/Ficheros/Fclientes
 
-            fichero_operaciones 1.2 $id_local ---
+            fichero_operaciones 1.2 $id_local $id_local ---
         else
             echo "El cliente indicado no existe."
-
             fichero_operaciones 1.2 --- ---
         fi
     else
         echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
         fichero_operaciones 1.2 --- ---
-
         pulsa_para_continuar
     fi
 
@@ -500,25 +502,32 @@ function area_clientes_baja_cliente() {
                 }
             }' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp
 
-            read -r linea <AplicacionIsmael/Ficheros/temp                                                         # Leemos el fichero temp que contiene la línea a borrar.
-            sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes                                               # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
-            rm AplicacionIsmael/Ficheros/temp                                                                     # Borramos el fichero temp.
-            linea=${linea%?}                                                                                      # Quitamos la letra S del final de la variable linea.
-            linea="$linea""N"                                                                                     # Añadimos N al final de linea.
-            echo $linea >>AplicacionIsmael/Ficheros/Fclientes                                                     # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
-            sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >tmp && mv tmp AplicacionIsmael/Ficheros/Fclientes # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
+            # Leemos el fichero temp que contiene la línea a borrar.
+            read -r linea <AplicacionIsmael/Ficheros/temp
+            # Borramos la línea del cliente seleccionado del fichero AplicacionIsmael/Ficheros/Fclientes.
+            sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fclientes
+            # Borramos el fichero temp.
+            rm AplicacionIsmael/Ficheros/temp
+            # Quitamos la letra S del final de la variable linea.
+            linea=${linea%?}
+            # Añadimos N al final de linea.
+            linea="$linea""N"
+            # Ponemos linea en el fichero AplicacionIsmael/Ficheros/Fclientes.
+            echo $linea >>AplicacionIsmael/Ficheros/Fclientes
+            # Ordenamos el fichero AplicacionIsmael/Ficheros/Fclientes
+            sort -k1 -t':' AplicacionIsmael/Ficheros/Fclientes >tmp && mv tmp AplicacionIsmael/Ficheros/Fclientes
 
             fichero_operaciones 1.3 $id_local ---
 
         else
             echo "Cliente no encontrado."
             fichero_operaciones 1.3 --- ---
+            pulsa_para_continuar
         fi
 
     else
         echo "El fichero AplicacionIsmael/Ficheros/Fclientes no existe."
         fichero_operaciones 1.3 --- ---
-
         pulsa_para_continuar
     fi
 
@@ -795,10 +804,9 @@ function gestion_documentos_alta_documento() {
             echo $fecha
 
             local cadena=$id_cliente:$id_documento:$descripcion:$fecha
-
             echo -e $cadena >>AplicacionIsmael/Ficheros/Fdocumento # Añadimos la línea al fichero AplicacionIsmael/Ficheros/Fdocumento
 
-            crear_documento $id_cliente $id_documento
+            crear_documento $id_cliente $id_documento # Creamos el documento en el directorio del cliente. El fichero tiene como nombre su id.
             fichero_operaciones 2.1 $id_cliente $id_documento
         else
             fichero_operaciones 2.1 --- ---
@@ -991,6 +999,7 @@ function gestion_documentos_presentacion_documento() {
                     local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
 
                     cadena=$login:$id_cliente:$id_documento:$id_organismo:$motivo_presentacion:$comunidad_autonoma:$poblacion:$fecha
+                    # Guardamos en el fichero FpresenDoc la línea asociada a la presentación del documento indicado.
                     echo -e $cadena >>AplicacionIsmael/Ficheros/FpresenDoc
                     fichero_operaciones 2.3 $id_cliente $id_documento
 
