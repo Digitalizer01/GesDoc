@@ -682,6 +682,107 @@ function mostrar_organismos() {
     fi
 }
 
+# Función que recibe un id de cliente y devuelve si existe o no.
+# Parámetro 1: id_cliente
+# Salida: 0 si no existe. 1 si sí existe.
+function existe_cliente() {
+
+    # Recorremos el fichero de clientes para averiguar si existe o no.
+
+    local enc=0
+    local id_cliente=$1
+
+    while IFS= read -r line; do
+        IFS=':' read -ra VALUES <<<"$line"
+        ## To pritn all values
+        for i in "${VALUES[0]}"; do
+            if [ ${VALUES[0]} == $id_cliente ]; then
+                enc=1
+            fi
+        done
+    done <AplicacionIsmael/Ficheros/Fclientes
+
+    return $enc
+}
+
+# Función que recibe un id de documento y devuelve si existe o no.
+# Parámetro 1: id_documento
+# Salida: 0 si no existe. 1 si sí existe.
+function existe_documento() {
+
+    # Recorremos el fichero de documentos para averiguar si existe o no.
+
+    local enc=0
+    local id_documento=$1
+
+    while IFS= read -r line; do
+        IFS=':' read -ra VALUES <<<"$line"
+        ## To pritn all values
+        for i in "${VALUES[0]}"; do
+            if [ ${VALUES[1]} == $id_documento ]; then
+                enc=1
+            fi
+        done
+    done <AplicacionIsmael/Ficheros/Fdocumento
+
+    return $enc
+}
+
+# Función que recibe un parámetro id_cliente y determina si el cliente está activo o no.
+# Parámetro 1: id_cliente
+# Salida: 0 si el cliente está inactivo. 1 si el cliente está activo.
+function cliente_activo() {
+
+    # Recorremos el fichero de clientes para encontrar el que tenemos
+    # por parámetro y comprobar si está activo o no.
+
+    local activo=0
+    local id_cliente=$1
+
+    while IFS= read -r line; do
+        IFS=':' read -ra VALUES <<<"$line"
+        ## To pritn all values
+        for i in "${VALUES[0]}"; do
+            if [ ${VALUES[0]} == "$id_cliente" ]; then
+                if [ ${VALUES[10]} == "S" ]; then
+                    activo=1
+                fi
+            fi
+        done
+    done <AplicacionIsmael/Ficheros/Fclientes
+
+    return $activo
+}
+
+# Función que recibe por parámetro el id de un documento y devuelve si está asociado a un cliente activo o no.
+# Parámetro 1: id_documento
+# Salida: 0 si el cliente es inactivo. 1 si el cliente es activo.
+function documento_pertenece_cliente_activo() {
+
+    local id_documento=$1
+    local id_cliente_documento=0
+    local activo=0
+
+    # Vamos a recorrer el fichero Fdocumentos para encontrar el id del cliente asociado al
+    # fichero que hemos pasado por parámetros.
+
+    while IFS= read -r line && [ $activo -eq 0 ]; do
+        IFS=':' read -ra VALUES <<<"$line"
+        ## To pritn all values
+        for i in "${VALUES[0]}"; do
+            id_cliente_documento=${VALUES[0]}
+
+            cliente_activo $id_cliente_documento
+
+            if [ $? -eq 1 ]; then
+                activo=1
+            fi
+        done
+    done <AplicacionIsmael/Ficheros/Fdocumento
+
+    return $activo
+}
+
 # Función que muestra todos los documentos del fichero Fdocumento
 function mostrar_documentos() {
     if [ -f AplicacionIsmael/Ficheros/Fdocumento ]; then
@@ -692,15 +793,45 @@ function mostrar_documentos() {
         printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
         printf "\n"
 
-        awk -F ":" '{
-        printf "%-20s", $1
-        printf "%-20s", $2
-        printf "%-70s", $3
-        printf "%-11s", $4
-        printf "\n"
-        }' AplicacionIsmael/Ficheros/Fdocumento
+        # Leemos todos los documentos que haya en Fdocumentos, pero solo se mostrarán los que contengan
+        # un id de cliente que esté activo.
+        # Recorreremos el fichero de documentos. Por cada documento, comprobaremos que el id de cliente
+        # se encuentre en el fichero temp_clientes_activos. Si lo está, lo mostraremos.
+        local id_cliente_documento=0
+        local id_documento=0
+        local descripcion=0
+        local fecha=0
+
+        local id_cliente_fclientes=0
+        while IFS= read -r line; do
+            IFS=':' read -ra VALUES <<<"$line"
+            ## To pritn all values
+            for i in "${VALUES[2]}"; do
+                id_cliente_documento=${VALUES[0]}
+                id_documento=${VALUES[1]}
+                descripcion=${VALUES[2]}
+                fecha=${VALUES[3]}
+
+                # Recorremos el fichero de clientes para ver si el id de cliente del documento
+                # coincide con que dicho cliente está activo.
+
+                documento_pertenece_cliente_activo $id_cliente_documento
+                local cliente_activo=$?
+
+                if [ $cliente_activo -eq 1 ]; then
+                    printf "$id_cliente_documento"
+                    printf "%-18s $id_documento"
+                    printf "%-18s $descripcion"
+                    printf "%-60s $fecha"
+                    printf "\n"
+                fi
+
+            done
+
+        done <AplicacionIsmael/Ficheros/Fdocumento
 
     else
+
         echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
 }
@@ -822,6 +953,19 @@ function gestion_documentos_alta_documento() {
     return
 }
 
+# Función que permite borrar el documento indicado del cliente indicado de su directorio correspondiente.
+# Parámetro 1: id_cliente
+# Parámetro 2: id_documento
+function borrar_documento() {
+
+    local id_cliente=$1
+    local id_documento=$2
+    local cadena="AplicacionIsmael/AreaCli/$id_cliente""_Doc/$id_documento"
+
+    rm $cadena
+
+    return
+}
 # Función que da de baja un documento del fichero Fdocumento eliminando la línea referida
 # a dicho documento.
 function gestion_documentos_baja_documento() {
@@ -832,36 +976,41 @@ function gestion_documentos_baja_documento() {
         echo -n "Introduzca el id del documento que desea dar de baja: "
         read id_documento
 
-        local enc=0
+        local esta_activo=0
+        documento_pertenece_cliente_activo $id_documento
+        esta_activo=$?
 
-        # Si el fichero AplicacionIsmael/Ficheros/FpresenDoc existe, comprobamos que exista el id del documento que queremos
-        # eliminar. Si existe, significa que no lo podemos eliminar porque está presentado.
-        # Si no existe, puede eliminarse el documento.
-        # Si el ficher AplicacionIsmael/Ficheros/FpresenDoc no existe, puede eliminarse directamente el documento.
-        if [ -f AplicacionIsmael/Ficheros/FpresenDoc ]; then
-            # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
-            # Buscamos si el documento está presentado. Si lo está, enc=1.
-            # Si no, enc=0.
-            while IFS= read -r line; do
-                IFS=':' read -ra VALUES <<<"$line"
-                ## To pritn all values
-                for i in "${VALUES[2]}"; do
-                    if [ $i == $id_documento ]; then
-                        enc=1
-                    fi
-                done
-            done <AplicacionIsmael/Ficheros/FpresenDoc
+        if [ $esta_activo -eq 1 ]; then
+            local enc=0
 
-        else
-            enc=0
-        fi
+            # Si el fichero AplicacionIsmael/Ficheros/FpresenDoc existe, comprobamos que exista el id del documento que queremos
+            # eliminar. Si existe, significa que no lo podemos eliminar porque está presentado.
+            # Si no existe, puede eliminarse el documento.
+            # Si el ficher AplicacionIsmael/Ficheros/FpresenDoc no existe, puede eliminarse directamente el documento.
+            if [ -f AplicacionIsmael/Ficheros/FpresenDoc ]; then
+                # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
+                # Buscamos si el documento está presentado. Si lo está, enc=1.
+                # Si no, enc=0.
+                while IFS= read -r line; do
+                    IFS=':' read -ra VALUES <<<"$line"
+                    ## To pritn all values
+                    for i in "${VALUES[2]}"; do
+                        if [ $i == $id_documento ]; then
+                            enc=1
+                        fi
+                    done
+                done <AplicacionIsmael/Ficheros/FpresenDoc
 
-        # Si no hemos encontrado el documento con el id introducido o no existe el fichero AplicacionIsmael/Ficheros/FpresenDoc,
-        # borramos la línea correspondiente a dicho documento en AplicacionIsmael/Ficheros/Fdocumento
-        if [ $enc -eq 0 ]; then
-            # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
-            local linea=0
-            awk -v id_local_baja=$id_documento -F ":" '{
+            else
+                enc=0
+            fi
+
+            # Si no hemos encontrado el documento con el id introducido o no existe el fichero AplicacionIsmael/Ficheros/FpresenDoc,
+            # borramos la línea correspondiente a dicho documento en AplicacionIsmael/Ficheros/Fdocumento
+            if [ $enc -eq 0 ]; then
+                # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
+                local linea=0
+                awk -v id_local_baja=$id_documento -F ":" '{
             if($2==id_local_baja) {
                     printf $1
                     printf ":"
@@ -873,19 +1022,26 @@ function gestion_documentos_baja_documento() {
                 }
             }' AplicacionIsmael/Ficheros/Fdocumento >AplicacionIsmael/Ficheros/temp
 
-            read -r linea <AplicacionIsmael/Ficheros/temp                      # Leemos el fichero temp que contiene la línea a borrar.
-            local id_cliente=$(cut -d ":" -f 1 AplicacionIsmael/Ficheros/temp) # Obtenemos el id de cliente de la línea.
+                read -r linea <AplicacionIsmael/Ficheros/temp                      # Leemos el fichero temp que contiene la línea a borrar.
+                local id_cliente=$(cut -d ":" -f 1 AplicacionIsmael/Ficheros/temp) # Obtenemos el id de cliente de la línea.
 
-            sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fdocumento # Borramos la línea del documento seleccionado del fichero AplicacionIsmael/Ficheros/Fdocumento.
-            rm AplicacionIsmael/Ficheros/temp                        # Borramos el ficher temp.
-            fichero_operaciones 2.1 $id_cliente $id_documento
+                sed -i "\|$linea|d" AplicacionIsmael/Ficheros/Fdocumento # Borramos la línea del documento seleccionado del fichero AplicacionIsmael/Ficheros/Fdocumento.
+                rm AplicacionIsmael/Ficheros/temp                        # Borramos el ficher temp.
+                borrar_documento $id_cliente $id_documento
+                fichero_operaciones 2.1 $id_cliente $id_documento
+            else
+                fichero_operaciones 2.2 --- ---
+                echo "El documento indicado no existe o ha sido presentado ya."
+                pulsa_para_continuar
+            fi
         else
+            echo "El documento indicado pertenece a un usuario inactivo"
             fichero_operaciones 2.2 --- ---
-            echo "El documento indicado no existe o ha sido presentado ya."
             pulsa_para_continuar
         fi
 
     else
+
         fichero_operaciones 2.2 --- ---
         echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         pulsa_para_continuar
@@ -909,110 +1065,151 @@ function gestion_documentos_presentacion_documento() {
             echo -n "Introduzca el id del cliente que desea presentar un documento: "
             read id_cliente
 
-            if ! [ -f AplicacionIsmael/Ficheros/FpresenDoc ]; then
-                echo "No existe el fichero AplicacionIsmael/Ficheros/FpresenDoc. Va a crearse uno."
-                echo -n "" >AplicacionIsmael/Ficheros/FpresenDoc
-            fi
+            cliente_activo $id_cliente
 
-            # Buscamos si el documento está presentado. Si lo está, enc=1.
-            # Si no, enc=0.
-            local enc_cliente=0
-            while IFS= read -r line; do
-                IFS=':' read -ra VALUES <<<"$line"
-                ## To pritn all values
-                for i in "${VALUES[0]}"; do
-                    if [ ${VALUES[10]} == $id_cliente ] && [ ${VALUES[10]} == "S" ]; then
-                        enc_cliente=1
-                    fi
-                done
-            done <AplicacionIsmael/Ficheros/FpresenDoc
+            if [ $? -eq 1 ]; then
+                if ! [ -f AplicacionIsmael/Ficheros/FpresenDoc ]; then
+                    echo "No existe el fichero AplicacionIsmael/Ficheros/FpresenDoc. Va a crearse uno."
+                    echo -n "" >AplicacionIsmael/Ficheros/FpresenDoc
+                fi
 
-            mostrar_documentos
-
-            local id_documento=0
-            echo -n "Introduzca el id del documento que desea presentar a un organismo: "
-            read id_documento
-
-            # Buscamos si el documento está presentado. Si lo está, enc=1.
-            # Si no, enc=0.
-            local enc=0
-            while IFS= read -r line; do
-                IFS=':' read -ra VALUES <<<"$line"
-                ## To pritn all values
-                for i in "${VALUES[0]}"; do
-                    if [ $i == $id_local ] && [ ${VALUES[10]} == "S" ]; then
-                        enc=1
-                    fi
-                done
-            done <AplicacionIsmael/Ficheros/FpresenDoc
-
-            # Si hemos encontrado el documento con el id introducido, borramos la línea correspondiente
-            # a dicho documento en AplicacionIsmael/Ficheros/Fdocumento
-            if ! [ $enc -eq 1 ]; then
-
-                # Mostramos los organismos.
-                mostrar_organismos
-
-                local id_organismo=0
-                echo -n "Introduzca el id del organismo al que quiere presentar el documento: "
-                read id_organismo
-
-                local enc2=0
+                # Buscamos si el documento está presentado. Si lo está, enc=1.
+                # Si no, enc=0.
+                local enc_cliente=0
                 while IFS= read -r line; do
                     IFS=':' read -ra VALUES <<<"$line"
                     ## To pritn all values
                     for i in "${VALUES[0]}"; do
-                        if [ $i == $id_organismo ]; then
-                            enc2=1
-                        fi
-                    done
-                done <AplicacionIsmael/Ficheros/Forganismos
-
-                # Comprobamos que no hayamos presentado anteriormente el documento al mismo organismo
-                # Si se presentó antes a ese mismo organismo, enc3=1
-                # Si no, enc3=0
-                local enc3=0
-                while IFS= read -r line; do
-                    IFS=':' read -ra VALUES <<<"$line"
-                    ## To pritn all values
-                    for i in "${VALUES[3]}"; do
-                        if [ $i == $id_organismo ] && [ $id_cliente == ${VALUES[1]} ]; then
-                            enc3=1
+                        if [ ${VALUES[0]} == $id_cliente ]; then
+                            if [ ${VALUES[10]} == "S" ]; then
+                                enc_cliente=1
+                            fi
                         fi
                     done
                 done <AplicacionIsmael/Ficheros/FpresenDoc
 
-                if ! [ $enc3 -eq 1 ]; then
-                    # Si no se ha presentado al mismo organismo anteriormente
-                    local motivo_presentacion=0
-                    echo -n "Introduzca el motivo de la presentación: "
-                    read motivo_presentacion
+                mostrar_documentos
 
-                    local comunidad_autonoma=0
-                    echo -n "Introduzca la comunidad autónoma donde se presenta: "
-                    read comunidad_autonoma
+                local id_documento=0
+                echo -n "Introduzca el id del documento que desea presentar a un organismo: "
+                read id_documento
 
-                    local poblacion=0
-                    echo -n "Introduzca la población donde se realiza la presentación: "
-                    read poblacion
+                existe_documento $id_documento
 
-                    local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
+                if [ $? -eq 1 ]; then
+                    local esta_activo=0
+                    documento_pertenece_cliente_activo $id_documento
+                    esta_activo=$?
 
-                    cadena=$login:$id_cliente:$id_documento:$id_organismo:$motivo_presentacion:$comunidad_autonoma:$poblacion:$fecha
-                    # Guardamos en el fichero FpresenDoc la línea asociada a la presentación del documento indicado.
-                    echo -e $cadena >>AplicacionIsmael/Ficheros/FpresenDoc
-                    fichero_operaciones 2.3 $id_cliente $id_documento
+                    if [ $esta_activo -eq 1 ]; then
+                        # Buscamos si el documento está presentado. Si lo está, enc=1.
+                        # Si no, enc=0.
+                        local enc=0
+                        while IFS= read -r line; do
+                            IFS=':' read -ra VALUES <<<"$line"
+                            ## To pritn all values
+                            for i in "${VALUES[0]}"; do
+                                if [ $i == $id_local ]; then
+                                    enc=1
+                                fi
+                            done
+                        done <AplicacionIsmael/Ficheros/FpresenDoc
 
+                        # Si hemos encontrado el documento con el id introducido, borramos la línea correspondiente
+                        # a dicho documento en AplicacionIsmael/Ficheros/Fdocumento
+                        if ! [ $enc -eq 1 ]; then
+
+                            # Mostramos los organismos.
+                            mostrar_organismos
+
+                            local id_organismo=0
+                            echo -n "Introduzca el id del organismo al que quiere presentar el documento: "
+                            read id_organismo
+
+                            cantidad_organismos=($(sort -t ':' -k 1 -n -r AplicacionIsmael/Ficheros/Forganismos | head -1 | cut -d ":" -f 1))
+
+                            if [ $cantidad_organismos -ge $id_organismo ] && [ $id_organismo -ge 1 ]; then
+                                local enc2=0
+                                while IFS= read -r line; do
+                                    IFS=':' read -ra VALUES <<<"$line"
+                                    ## To pritn all values
+                                    for i in "${VALUES[0]}"; do
+                                        if [ $i == $id_organismo ]; then
+                                            enc2=1
+                                        fi
+                                    done
+                                done <AplicacionIsmael/Ficheros/Forganismos
+
+                                # Comprobamos que no hayamos presentado anteriormente el documento al mismo organismo
+                                # Si se presentó antes a ese mismo organismo, enc3=1
+                                # Si no, enc3=0
+                                local enc3=0
+                                while IFS= read -r line; do
+                                    IFS=':' read -ra VALUES <<<"$line"
+                                    ## To pritn all values
+                                    for i in "${VALUES[3]}"; do
+                                        if [ $i == $id_organismo ] && [ $id_cliente == ${VALUES[1]} ]; then
+                                            enc3=1
+                                        fi
+                                    done
+                                done <AplicacionIsmael/Ficheros/FpresenDoc
+
+                                if ! [ $enc3 -eq 1 ]; then
+                                    # Si no se ha presentado al mismo organismo anteriormente
+                                    local motivo_presentacion=0
+                                    echo -n "Introduzca el motivo de la presentación: "
+                                    read motivo_presentacion
+
+                                    local comunidad_autonoma=0
+                                    echo -n "Introduzca la comunidad autónoma donde se presenta: "
+                                    read comunidad_autonoma
+
+                                    local poblacion=0
+                                    echo -n "Introduzca la población donde se realiza la presentación: "
+                                    read poblacion
+
+                                    local fecha=$(date +"%d/%m/%Y") # Tomamos la fecha.
+
+                                    cadena=$login:$id_cliente:$id_documento:$id_organismo:$motivo_presentacion:$comunidad_autonoma:$poblacion:$fecha
+                                    # Guardamos en el fichero FpresenDoc la línea asociada a la presentación del documento indicado.
+                                    echo -e $cadena >>AplicacionIsmael/Ficheros/FpresenDoc
+                                    fichero_operaciones 2.3 $id_cliente $id_documento
+
+                                else
+                                    fichero_operaciones 2.3 --- ---
+                                    echo "El documento especificado ya se ha presentado a ese mismo organismo."
+                                    pulsa_para_continuar
+                                fi
+                            else
+                                fichero_operaciones 2.3 --- ---
+                                echo "El organismo indicado no existe."
+                                pulsa_para_continuar
+                            fi
+
+                        else
+                            fichero_operaciones 2.3 --- ---
+                            echo "El documento ya ha sido presentado."
+                            pulsa_para_continuar
+                        fi
+                    else
+                        echo "El documento indicado pertenece a un usuario inactivo"
+                        fichero_operaciones 2.3 --- ---
+                        pulsa_para_continuar
+                    fi
                 else
                     fichero_operaciones 2.3 --- ---
-                    echo "El documento especificado ya se ha presentado a ese mismo organismo."
+                    echo "El documento indicado no existe."
+                    pulsa_para_continuar
                 fi
 
             else
                 fichero_operaciones 2.3 --- ---
-                echo "El documento ya ha sido presentado."
+                echo "El cliente indicado está inactivo."
+                pulsa_para_continuar
             fi
+
         else
+
             fichero_operaciones 2.3 --- ---
             echo "El fichero de clientes no existe."
         fi
@@ -1021,8 +1218,6 @@ function gestion_documentos_presentacion_documento() {
         fichero_operaciones 2.3 --- ---
         echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
-
-    pulsa_para_continuar
 
     return
 }
@@ -1039,46 +1234,55 @@ function gestion_documentos_consultas_cliente_dado() {
             echo -n "Introduza el id del cliente que desea consultar: "
             read id_cliente
 
-            # Vamos a imprimir todos los documentos asociados al cliente elegido.
+            cliente_activo $id_cliente
 
-            awk -v id_cliente_local=$id_cliente -F ":" '{
-            if($1==id_cliente_local) {
-                    printf $1
-                    printf ":"
-                    printf $2
-                    printf ":"
-                    printf $3
-                    printf ":"
-                    printf $4
-                }
-            }' AplicacionIsmael/Ficheros/Fdocumento >AplicacionIsmael/Ficheros/temp
+            if [ $? -eq 1 ]; then
+                # Vamos a imprimir todos los documentos asociados al cliente elegido.
 
-            # Comprobamos si el fichero temp está vacío o no.
-            # Si está vacío, mostraremos el mensaje correspondiente.
-            # Si no lo está, mostraremos los datos de los documentos.
-            if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
-                fichero_operaciones 2.4.1 $id_cliente ---
-                echo "No dispone de documentos asociados."
-            else
-                printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 1
-                printf "\e[4m%-20s\e[0m" "Id documento" # Valor 2
-                printf "\e[4m%-70s\e[0m" "Descripción"  # Valor 3
-                printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
-                printf "\n"
+                awk -v id_cliente_local=$id_cliente -F ":" '{
+                if($1==id_cliente_local) {
+                        printf $1
+                        printf ":"
+                        printf $2
+                        printf ":"
+                        printf $3
+                        printf ":"
+                        printf $4
+                        printf "\n"
+                    }
+                }' AplicacionIsmael/Ficheros/Fdocumento >AplicacionIsmael/Ficheros/temp
 
-                awk -F ":" '{
+                # Comprobamos si el fichero temp está vacío o no.
+                # Si está vacío, mostraremos el mensaje correspondiente.
+                # Si no lo está, mostraremos los datos de los documentos.
+                if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
+                    fichero_operaciones 2.4.1 $id_cliente ---
+                    echo "No dispone de documentos asociados."
+                else
+                    printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 1
+                    printf "\e[4m%-20s\e[0m" "Id documento" # Valor 2
+                    printf "\e[4m%-70s\e[0m" "Descripción"  # Valor 3
+                    printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
+                    printf "\n"
+
+                    awk -F ":" '{
                     printf "%-20s", $1
                     printf "%-20s", $2
                     printf "%-70s", $3
                     printf "%-11s", $4
                     printf "\n"
                 }' AplicacionIsmael/Ficheros/temp
+                fi
+
+                rm AplicacionIsmael/Ficheros/temp
+                fichero_operaciones 2.4.1 $id_cliente "varios"
+            else
+                fichero_operaciones 2.4.1 --- ---
+                echo "El cliente introducido está inactivo."
             fi
 
-            rm AplicacionIsmael/Ficheros/temp
-            fichero_operaciones 2.4.1 $id_cliente "varios"
-
         else
+
             fichero_operaciones 2.4.1 --- ---
             echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
         fi
@@ -1103,58 +1307,68 @@ function gestion_documentos_consultas_organismos() {
         echo -n "Introduzca el id del documento que desea consultar los organismos a los que se ha presentado: "
         read id_documento
 
-        # Si el fichero AplicacionIsmael/Ficheros/FpresenDoc existe, comprobamos que exista el id del documento que queremos
-        # consultar. Si existe, consultamos su id de organismo.
-        if [ -f AplicacionIsmael/Ficheros/FpresenDoc ]; then
-            # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
-            # Buscamos si el documento está presentado.
-            # Si no, enc=0.
+        documento_pertenece_cliente_activo $id_documento
 
-            printf "\e[4m%-10s\e[0m" "Id"               # Valor 1
-            printf "\e[4m%-70s\e[0m" "Nombre organismo" # Valor 2
-            printf "\n"
+        if [ $? -eq 1 ]; then
+            # Si el fichero AplicacionIsmael/Ficheros/FpresenDoc existe, comprobamos que exista el id del documento que queremos
+            # consultar. Si existe, consultamos su id de organismo.
+            if [ -f AplicacionIsmael/Ficheros/FpresenDoc ]; then
+                # id_usuario:id_cliente:id_documento:id_organismo:motivo_presentación:comunidad_autónoma:población:fecha
+                # Buscamos si el documento está presentado.
+                # Si no, enc=0.
 
-            local id_organismo=0
-            local id_cliente=0
-            while IFS= read -r line; do
-                IFS=':' read -ra VALUES <<<"$line"
-                ## To pritn all values
-                for i in "${VALUES[2]}"; do
-                    if [ $i == $id_documento ]; then
-                        id_organismo=${VALUES[3]}
-                        id_cliente=${VALUES[1]}
-                        # Si no hemos encontrado el documento con el id introducido o no existe el fichero AplicacionIsmael/Ficheros/FpresenDoc,
-                        # mostramos el organismo al que se ha presentado el documento.
-                        # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
+                printf "\e[4m%-10s\e[0m" "Id"               # Valor 1
+                printf "\e[4m%-70s\e[0m" "Nombre organismo" # Valor 2
+                printf "\n"
 
-                        # id_organismo:nombre_organismo
+                local id_organismo=0
+                local id_cliente=0
+                while IFS= read -r line; do
+                    IFS=':' read -ra VALUES <<<"$line"
+                    ## To pritn all values
+                    for i in "${VALUES[2]}"; do
+                        if [ $i == $id_documento ]; then
+                            id_organismo=${VALUES[3]}
+                            id_cliente=${VALUES[1]}
+                            # Si no hemos encontrado el documento con el id introducido o no existe el fichero AplicacionIsmael/Ficheros/FpresenDoc,
+                            # mostramos el organismo al que se ha presentado el documento.
+                            # Guardamos en el fichero temp la línea correspondiente al cliente seleccionado.
 
-                        awk -v id_local_organismo=$id_organismo -F ":" '{
-                        if($1==id_local_organismo) {
-                                printf "%-10s", $1
-                                printf "%-70s", $2
-                                printf "\n"
-                            }
-                        }' AplicacionIsmael/Ficheros/Forganismos >AplicacionIsmael/Ficheros/temp
+                            # id_organismo:nombre_organismo
 
-                        # Comprobamos si el documento está presentado a organismos o no.
-                        if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
-                            echo "El documento indicado no está presentado a ningún organismo."
-                        else
-                            awk -F ":" '{
+                            awk -v id_local_organismo=$id_organismo -F ":" '{
+                            if($1==id_local_organismo) {
+                                    printf "%-10s", $1
+                                    printf "%-70s", $2
+                                    printf "\n"
+                                }
+                            }' AplicacionIsmael/Ficheros/Forganismos >AplicacionIsmael/Ficheros/temp
+
+                            # Comprobamos si el documento está presentado a organismos o no.
+                            if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
+                                echo "El documento indicado no está presentado a ningún organismo."
+                            else
+                                awk -F ":" '{
                                 printf "%-10s", $1
                                 printf "%-70s", $2
                                 printf "\n"
                             }' AplicacionIsmael/Ficheros/temp
+                            fi
+                            rm AplicacionIsmael/Ficheros/temp
                         fi
-                    fi
-                done
-            done <AplicacionIsmael/Ficheros/FpresenDoc
+                    done
+                done <AplicacionIsmael/Ficheros/FpresenDoc
 
-            fichero_operaciones 2.4.2 $id_cliente $id_documento
+                fichero_operaciones 2.4.2 $id_cliente $id_documento
+            fi
+
+        else
+            fichero_operaciones 2.4.2 --- ---
+            echo "El documento introducido pertenece a un cliente inactivo o no se ha presentado todavía a un organismo."
         fi
 
     else
+
         fichero_operaciones 2.4.2 --- ---
         echo "El fichero AplicacionIsmael/Ficheros/Fdocumento no existe."
     fi
@@ -1263,78 +1477,98 @@ function gestion_informes_documentos_clientes() {
             array=($(cut -f 1 -d ":" AplicacionIsmael/Ficheros/Fclientes))
 
             for ((i = 0; i < ${#array[*]}; i++)); do
-                # Vamos a imprimir la información del cliente con id i
-
-                printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
-                printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
-                printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
-                printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
-                printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
-                printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
-                printf "\e[4m%-25s\e[0m" "País"        # Valor 7
-                printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
-                printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
-                printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
-                printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
-                printf "\n"
-
                 id_cliente=${array[i]}
 
+                # Guardamos en el fichero temp la información referida al cliente i.
                 awk -v id_cliente_local=$id_cliente -F ":" '{
-                if($1==id_cliente_local) {
-                        printf "%-10s", $1
-                        printf "%-15s", $2
-                        printf "%-17s", $3
-                        printf "%-30s", $4
-                        printf "%-16s", $5
-                        printf "%-25s", $6
-                        printf "%-24s", $7
-                        printf "%-14s", $8
-                        printf "%-14s", $9
-                        printf "%-17s", $10
-                        printf "%-10s", $11
+                    if($1==id_cliente_local && $11=="S") {
+                        printf $1
+                        printf ":"
+                        printf $2
+                        printf ":"
+                        printf $3
+                        printf ":"
+                        printf $4
+                        printf ":"
+                        printf $5
+                        printf ":"
+                        printf $6
+                        printf ":"
+                        printf $7
+                        printf ":"
+                        printf $8
+                        printf ":"
+                        printf $9
+                        printf ":"
+                        printf $10
+                        printf ":"
+                        printf $11
                         printf "\n"
                     }
-                }' AplicacionIsmael/Ficheros/Fclientes
+                }' AplicacionIsmael/Ficheros/Fclientes >AplicacionIsmael/Ficheros/temp
 
-                # Vamos a imprimir todos los documentos asociados al cliente elegido.
+                # Si el fichero temp está vacío, el cliente no cumple los requisitos
+                # para ser mostrado.
+                # Si no está vacío, cumple los requisitos.
 
-                printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 1
-                printf "\e[4m%-20s\e[0m" "Id documento" # Valor 2
-                printf "\e[4m%-70s\e[0m" "Descripción"  # Valor 3
-                printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
-                printf "\n"
+                if [ -s AplicacionIsmael/Ficheros/temp ]; then
 
-                awk -v id_cliente_local=$id_cliente -F ":" '{
+                    # Vamos a imprimir la información del cliente con id i
+                    # si es activo.
+                    printf "\e[4m%-10s\e[0m" "Id"          # Valor 1
+                    printf "\e[4m%-15s\e[0m" "Nombre"      # Valor 2
+                    printf "\e[4m%-17s\e[0m" "Apellidos"   # Valor 3
+                    printf "\e[4m%-31s\e[0m" "Dirección"   # Valor 4
+                    printf "\e[4m%-16s\e[0m" "Ciudad"      # Valor 5
+                    printf "\e[4m%-25s\e[0m" "Provincia"   # Valor 6
+                    printf "\e[4m%-25s\e[0m" "País"        # Valor 7
+                    printf "\e[4m%-14s\e[0m" "DNI"         # Valor 8
+                    printf "\e[4m%-15s\e[0m" "Teléfono"    # Valor 9
+                    printf "\e[4m%-17s\e[0m" "Carpeta Doc" # Valor 10
+                    printf "\e[4m%-10s\e[0m" "Activo"      # Valor 11
+                    printf "\n"
+
+                    awk -v id_cliente_local=$id_cliente -F ":" '{
+                    if($1==id_cliente_local && $11=="S") {
+                            printf "%-10s", $1
+                            printf "%-15s", $2
+                            printf "%-17s", $3
+                            printf "%-30s", $4
+                            printf "%-16s", $5
+                            printf "%-25s", $6
+                            printf "%-24s", $7
+                            printf "%-14s", $8
+                            printf "%-14s", $9
+                            printf "%-17s", $10
+                            printf "%-10s", $11
+                            printf "\n"
+                        }
+                    }' AplicacionIsmael/Ficheros/Fclientes
+
+                    # Vamos a imprimir todos los documentos asociados al cliente i.
+                    printf "\e[4m%-20s\e[0m" "Id cliente"   # Valor 1
+                    printf "\e[4m%-20s\e[0m" "Id documento" # Valor 2
+                    printf "\e[4m%-70s\e[0m" "Descripción"  # Valor 3
+                    printf "\e[4m%-11s\e[0m" "Fecha"        # Valor 4
+                    printf "\n"
+
+                    awk -v id_cliente_local=$id_cliente -F ":" '{
                     if($1==id_cliente_local) {
-                        printf "%-20s", $1
-                        printf "%-20s", $2
-                        printf "%-70s", $3
-                        printf "%-11s", $4
-                        printf "\n"
-                    }
-                }' AplicacionIsmael/Ficheros/Fdocumento >AplicacionIsmael/Ficheros/temp
+                            printf "%-20s", $1
+                            printf "%-20s", $2
+                            printf "%-70s", $3
+                            printf "%-11s", $4
+                            printf "\n"
+                        }
+                    }' AplicacionIsmael/Ficheros/Fdocumento
 
-                # Comprobamos si el fichero temp está vacío o no.
-                # Si está vacío, mostraremos el mensaje correspondiente.
-                # Si no lo está, mostraremos los datos de los documentos.
-                if ! [ -s AplicacionIsmael/Ficheros/temp ]; then
-                    echo "No dispone de documentos asociados."
-                else
-                    awk -F ":" '{
-                        printf "%-20s", $1
-                        printf "%-20s", $2
-                        printf "%-70s", $3
-                        printf "%-11s", $4
-                        printf "\n"
-                    }' AplicacionIsmael/Ficheros/temp
+                    rm AplicacionIsmael/Ficheros/temp
+                    printf "\n"
+
                 fi
 
-                rm AplicacionIsmael/Ficheros/temp
-
-                printf "\n"
-                fichero_operaciones 3.1 "varios" "varios"
             done
+            fichero_operaciones 3.1 "varios" "varios"
 
         else
             fichero_operaciones 3.1 --- ---
