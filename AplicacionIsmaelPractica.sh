@@ -1435,7 +1435,7 @@ function gestion_informes() {
 
         echo "████████ GESTIÓN DE INFORMES ████████"
         echo "       1. Documentos de clientes"
-        echo "       2. Acciones de usuario dado"
+        echo "       2. Acciones de usuarios"
         echo "       3. Salir"
         echo "█████████████████████████████████████"
 
