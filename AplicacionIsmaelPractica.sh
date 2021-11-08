@@ -37,7 +37,11 @@ function iniciar_sesion() {
 
     local cadena=$login:$contrasenia
 
-    grep -q $cadena 'AplicacionIsmael/Ficheros/Fusuarios' && iniciado=1
+    if ! [ -f "AplicacionIsmael/Ficheros/Fusuarios" ]; then
+        echo "El fichero Fusuarios no existe. Por favor, proporcione uno en AplicacionIsmael/Ficheros/Fusuarios."
+    else
+        grep -q $cadena 'AplicacionIsmael/Ficheros/Fusuarios' && iniciado=1
+    fi
 
     return $iniciado
 }
