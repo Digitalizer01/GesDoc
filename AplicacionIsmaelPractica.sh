@@ -18,6 +18,26 @@ if ! [ -d "AplicacionIsmael/Ficheros" ]; then
     mkdir "AplicacionIsmael/Ficheros"
 fi
 
+# Comprobamos que la carpeta Seguridad existe dentro de AplicacionIsmael.
+if ! [ -d "AplicacionIsmael/Seguridad" ]; then
+    echo "El directorio de Seguridad no existe. ¿Desea crear uno?"
+    echo "1: Sí, deseo crearlo."
+    echo "0 u otro valor: No, no deseo crearlo."
+
+    seguridad=0
+
+    read seguridad
+
+    if [ $seguridad -eq 1 ]; then
+        mkdir "AplicacionIsmael/Seguridad"
+        echo "El directorio ha sido creado."
+    else
+        echo "El directorio no ha sido creado."
+    fi
+
+    pulsa_para_continuar
+fi
+
 function pulsa_para_continuar() {
     local temp
     echo
@@ -895,6 +915,15 @@ function crear_documento() {
     touch $direccion
 }
 
+# Función para crear un documento en el directorio de un cliente dado en el directorio Seguridad.
+# El documento tendrá como nombre su id.
+# Parámetro 1: id_cliente (para encontrar la dirección del directorio del cliente)
+# Parámetro 2: id_documento (para el nombre del documento)
+function crear_documento_seguridad() {
+    direccion="AplicacionIsmael/Seguridad/$id_cliente""_Doc/$id_documento"
+    touch $direccion
+}
+
 # Función que da de alta un documento en el fichero Fdocumento.
 # Se crea un fichero en blanco con el nombre de su id de documento en el directorio del cliente
 # indicado.
@@ -942,6 +971,34 @@ function gestion_documentos_alta_documento() {
             echo -e $cadena >>AplicacionIsmael/Ficheros/Fdocumento # Añadimos la línea al fichero AplicacionIsmael/Ficheros/Fdocumento
 
             crear_documento $id_cliente $id_documento # Creamos el documento en el directorio del cliente. El fichero tiene como nombre su id.
+
+            # Comprobamos que la carpeta Seguridad existe dentro de AplicacionIsmael.
+            if ! [ -d "AplicacionIsmael/Seguridad" ]; then
+                echo "El directorio de Seguridad no existe. Va a crearse uno."
+                mkdir "AplicacionIsmael/Seguridad"
+
+                pulsa_para_continuar
+            fi
+
+            # Comprobamos que la carpeta Seguridad existe dentro de AplicacionIsmael.
+            if ! [ -d "AplicacionIsmael/Seguridad/$id_cliente""_Doc" ]; then
+                echo "No existe el directorio del cliente dado en Seguridad. Se va a crear uno."
+
+                direccion="AplicacionIsmael/Seguridad/$id_cliente""_Doc"
+
+                mkdir $direccion
+                direccion="AplicacionIsmael/Seguridad/$id_cliente""_Doc/$id_documento"
+                touch $direccion
+
+                pulsa_para_continuar
+            else
+
+                direccion="AplicacionIsmael/Seguridad/$id_cliente""_Doc/$id_documento"
+                touch $direccion
+
+                pulsa_para_continuar
+            fi
+
             fichero_operaciones 2.1 $id_cliente $id_documento
         else
             fichero_operaciones 2.1 --- ---
